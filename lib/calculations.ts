@@ -7,10 +7,18 @@ import {
   type P50Type,
 } from '@/data/extinguishers'
 
-// Per-unit cost over an arbitrary number of years
+// Per-unit cost over an arbitrary number of years.
+// Steel model: initial purchase (Year 1) + service every year + replacement at each lifespan
+// boundary + disposal at each replacement. exchangeCharge is the unit capital cost.
+// 5-yr unit over 8 yrs → 2 purchases (Year 1 + Year 5); 10-yr unit → 1 purchase.
 export function calcSteelCostPerUnitForYears(type: SteelType, years: number): number {
-  const cycles = Math.floor(years / type.lifeSpan)
-  return ANNUAL_SERVICE_CHARGE * years + cycles * type.exchangeCharge + cycles * DISPOSAL_CHARGE
+  if (years === 0) return 0
+  const replacements = Math.floor(years / type.lifeSpan)
+  const purchases = 1 + replacements          // initial purchase + end-of-life replacements
+  const capitalCost = purchases * type.exchangeCharge
+  const serviceCost = ANNUAL_SERVICE_CHARGE * years
+  const disposalCost = replacements * DISPOSAL_CHARGE
+  return capitalCost + serviceCost + disposalCost
 }
 
 // P50 is bought once per lifeSpan — ceil(years / lifeSpan) purchases
