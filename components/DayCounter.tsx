@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getTotalSaving, getEntries } from '@/lib/eventStore'
+import { getTotalSaving } from '@/lib/eventStore'
+import { supabase } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/calculations'
 
-// Smooth ease-out count-up animation
 function useCountUp(target: number) {
   const [current, setCurrent] = useState(0)
 
@@ -16,7 +16,7 @@ function useCountUp(target: number) {
     const tick = () => {
       const elapsed = Date.now() - startTime
       const progress = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3) // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3)
       setCurrent(Math.floor(eased * target))
       if (progress < 1) raf = requestAnimationFrame(tick)
     }
@@ -33,15 +33,44 @@ export default function DayCounter() {
   const [count, setCount] = useState(0)
 
   useEffect(() => {
-    setTotal(getTotalSaving())
-    setCount(getEntries().length)
-    setMounted(true)
+    async function load() {
+      const saving = await getTotalSaving()
+      setTotal(saving)
+      // count is derived from the leaderboard subscription; fetch once for initial count
+      const { count: c } = await supabase
+        .from('event_entries')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', new Date().toISOString().split('T')[0])
+      setCount(c ?? 0)
+      setMounted(true)
+    }
+    load()
+
+    const channel = supabase
+      .channel('day-counter')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'event_entries' },
+        async () => {
+          const [saving, { count: c }] = await Promise.all([
+            getTotalSaving(),
+            supabase
+              .from('event_entries')
+              .select('id', { count: 'exact', head: true })
+              .gte('created_at', new Date().toISOString().split('T')[0]),
+          ])
+          setTotal(saving)
+          setCount(c ?? 0)
+        },
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   const animatedTotal = useCountUp(total)
 
   if (!mounted) {
-    // Skeleton to avoid layout shift
     return (
       <div className="bg-brand-dark w-full py-8">
         <div className="max-w-5xl mx-auto px-5 text-center">

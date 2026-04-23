@@ -82,7 +82,7 @@ export default function ResultsPage() {
       company: company || 'Anonymous',
       industry: industry || 'Other',
       saving: defaultTotals.saving,
-    })
+    }).catch(() => { /* non-critical, ignore network errors */ })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const totals = useMemo(

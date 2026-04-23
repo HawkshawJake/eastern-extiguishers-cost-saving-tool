@@ -27,13 +27,12 @@ export default function WelcomePage() {
     router.push('/calculator')
   }
 
-  function handleResetDay() {
+  async function handleResetDay() {
     if (!confirmReset) {
       setConfirmReset(true)
       return
     }
-    resetEntries()
-    // Force a re-render of child components by reloading the page
+    await resetEntries()
     window.location.reload()
   }
 

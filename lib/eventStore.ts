@@ -1,48 +1,46 @@
-const STORAGE_KEY = 'ee_event_entries'
+import { supabase } from './supabase'
 
 export interface EventEntry {
   id: string
   company: string
   industry: string
   saving: number
-  timestamp: number
+  created_at: string
 }
 
-function readEntries(): EventEntry[] {
-  if (typeof window === 'undefined') return []
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]')
-  } catch {
-    return []
-  }
+function todayPrefix(): string {
+  return new Date().toISOString().split('T')[0]
 }
 
-export function getEntries(): EventEntry[] {
-  return readEntries()
+export async function addEntry(
+  entry: Pick<EventEntry, 'company' | 'industry' | 'saving'>,
+): Promise<void> {
+  await supabase.from('event_entries').insert(entry)
 }
 
-export function addEntry(entry: Omit<EventEntry, 'id' | 'timestamp'>): void {
-  const entries = readEntries()
-  entries.push({ ...entry, id: crypto.randomUUID(), timestamp: Date.now() })
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries))
+export async function getLeaderboard(limit = 10): Promise<EventEntry[]> {
+  const { data } = await supabase
+    .from('event_entries')
+    .select('id, company, industry, saving, created_at')
+    .gte('created_at', todayPrefix())
+    .order('saving', { ascending: false })
+    .limit(limit)
+  return data ?? []
 }
 
-export function resetEntries(): void {
-  localStorage.setItem(STORAGE_KEY, '[]')
-  // Clear session flags so the current visitor can re-save after reset
+export async function getTotalSaving(): Promise<number> {
+  const { data } = await supabase
+    .from('event_entries')
+    .select('saving')
+    .gte('created_at', todayPrefix())
+  return (data ?? []).reduce((sum, row) => sum + Number(row.saving), 0)
+}
+
+export async function resetEntries(): Promise<void> {
+  await supabase.from('event_entries').delete().gte('created_at', todayPrefix())
   try {
     for (const key of Object.keys(sessionStorage)) {
       if (key.startsWith('ee_saved_')) sessionStorage.removeItem(key)
     }
   } catch { /* ignore */ }
-}
-
-export function getTotalSaving(): number {
-  return readEntries().reduce((sum, e) => sum + e.saving, 0)
-}
-
-export function getLeaderboard(limit = 10): EventEntry[] {
-  return readEntries()
-    .sort((a, b) => b.saving - a.saving)
-    .slice(0, limit)
 }
