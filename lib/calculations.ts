@@ -21,9 +21,11 @@ export function calcSteelCostPerUnitForYears(type: SteelType, years: number): nu
   return capitalCost + serviceCost + disposalCost
 }
 
-// P50 is bought once per lifeSpan — ceil(years / lifeSpan) purchases
+// P50: first purchase at full price; replacements at 60% (end-of-life composite swap discount)
 export function calcP50CostPerUnitForYears(type: P50Type, years: number): number {
-  return type.clientCost * Math.ceil(years / type.lifeSpan)
+  const purchases = Math.ceil(years / type.lifeSpan)
+  if (purchases === 0) return 0
+  return type.clientCost + (purchases - 1) * type.clientCost * 0.6
 }
 
 export interface Totals {
