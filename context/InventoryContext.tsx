@@ -52,16 +52,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const applyPreset = useCallback((industryKey: string) => {
-    const preset = INDUSTRY_PRESETS[industryKey] ?? {}
-    setSteelInventory(preset)
+    const preset = INDUSTRY_PRESETS[industryKey] ?? { steel: {}, p50: {} }
+    setSteelInventory(preset.steel)
+    setP50Inventory(preset.p50)
     setP50Touched(new Set())
-    // Auto-fill P50 from mapping
-    const newP50: Record<string, number> = {}
-    for (const [steelId, qty] of Object.entries(preset)) {
-      const p50Id = STEEL_TO_P50_MAP[steelId]
-      if (p50Id) newP50[p50Id] = (newP50[p50Id] ?? 0) + qty
-    }
-    setP50Inventory(newP50)
   }, [])
 
   const resetInventory = useCallback(() => {

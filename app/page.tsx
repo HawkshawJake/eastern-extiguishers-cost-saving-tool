@@ -15,7 +15,7 @@ export default function WelcomePage() {
   const { company, industry, setCompany, setIndustry, applyPreset, resetInventory } = useInventory()
   const [confirmReset, setConfirmReset] = useState(false)
 
-  const hasPreset = industry && Object.keys(INDUSTRY_PRESETS[industry] ?? {}).length > 0
+  const hasPreset = industry && Object.keys(INDUSTRY_PRESETS[industry]?.steel ?? {}).length > 0
 
   function handleUsePreset() {
     applyPreset(industry)
