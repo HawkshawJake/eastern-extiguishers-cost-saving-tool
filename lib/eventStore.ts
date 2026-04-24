@@ -41,7 +41,7 @@ export async function getTotalSaving(): Promise<number> {
 export async function getAllEntries(): Promise<EventEntry[]> {
   const { data } = await supabase
     .from('event_entries')
-    .select('id, company, industry, saving, created_at')
+    .select('id, company, industry, saving, created_at, steel_inventory, p50_inventory')
     .order('created_at', { ascending: false })
   return data ?? []
 }
