@@ -1,31 +1,37 @@
 import {
   ANNUAL_SERVICE_CHARGE,
   DISPOSAL_CHARGE,
+  P50_UNIT_DISPOSAL,
+  CALLOUT_CHARGE_STEEL,
+  CALLOUT_CHARGE_P50,
+  P50_INSTALLATION_CHARGE,
   STEEL_CO2_PER_UNIT,
   P50_CO2_PER_UNIT,
   type SteelType,
   type P50Type,
 } from '@/data/extinguishers'
 
-// Per-unit cost over an arbitrary number of years.
-// Steel model: initial purchase (Year 1) + service every year + replacement at each lifespan
-// boundary + disposal at each replacement. exchangeCharge is the unit capital cost.
-// 5-yr unit over 8 yrs → 2 purchases (Year 1 + Year 5); 10-yr unit → 1 purchase.
+// Per-unit steel cost over N years (excludes the site-level £100/yr callout).
+// Craig's model: replacement triggers at Year (lifeSpan × n + 1), not Year (lifeSpan × n).
+// i.e. a 5-yr unit bought in Year 1 is replaced in Year 6, not Year 5.
 export function calcSteelCostPerUnitForYears(type: SteelType, years: number): number {
   if (years === 0) return 0
-  const replacements = Math.floor(years / type.lifeSpan)
-  const purchases = 1 + replacements          // initial purchase + end-of-life replacements
-  const capitalCost = purchases * type.exchangeCharge
+  const replacements = Math.floor((years - 1) / type.lifeSpan)
+  const purchases = 1 + replacements
+  const capitalCost = purchases * type.clientCost
   const serviceCost = ANNUAL_SERVICE_CHARGE * years
   const disposalCost = replacements * DISPOSAL_CHARGE
   return capitalCost + serviceCost + disposalCost
 }
 
-// P50: first purchase at full price; replacements at 60% (end-of-life composite swap discount)
+// Per-unit P50 cost over N years (excludes site-level callout and initial steel disposal).
+// First purchase: clientCost + installation. Replacements: 60% price + installation.
 export function calcP50CostPerUnitForYears(type: P50Type, years: number): number {
   const purchases = Math.ceil(years / type.lifeSpan)
   if (purchases === 0) return 0
-  return type.clientCost + (purchases - 1) * type.clientCost * 0.6
+  const replacements = purchases - 1
+  return (type.clientCost + P50_INSTALLATION_CHARGE)
+    + replacements * (type.clientCost * 0.6 + P50_INSTALLATION_CHARGE)
 }
 
 export interface Totals {
@@ -55,6 +61,8 @@ export function calcTotals(
     totalSteelCost += calcSteelCostPerUnitForYears(type, years) * qty
     totalSteelUnits += qty
   }
+  // Annual engineer call-out for the steel service contract
+  totalSteelCost += CALLOUT_CHARGE_STEEL * years
 
   let totalP50Cost = 0
   let totalP50Units = 0
@@ -64,6 +72,17 @@ export function calcTotals(
     totalP50Cost += calcP50CostPerUnitForYears(type, years) * qty
     totalP50Units += qty
   }
+  // Disposal of all existing steel units when switching to P50
+  totalP50Cost += totalSteelUnits * P50_UNIT_DISPOSAL
+  // Call-out for initial P50 installation + one per replacement event across all types
+  let p50Callouts = totalP50Units > 0 ? 1 : 0
+  for (const type of p50Types) {
+    const qty = p50Inventory[type.id] ?? 0
+    if (qty === 0) continue
+    const replacements = Math.ceil(years / type.lifeSpan) - 1
+    p50Callouts += replacements
+  }
+  totalP50Cost += p50Callouts * CALLOUT_CHARGE_P50
 
   const saving = totalSteelCost - totalP50Cost
   const percentSaving = totalSteelCost > 0 ? saving / totalSteelCost : 0
@@ -93,7 +112,7 @@ export interface CostPoint {
   p50: number
 }
 
-// Year-by-year cumulative costs for the chart (year 0 = starting point, both at 0)
+// Year-by-year cumulative costs for the chart (year 0 = £0 for both).
 export function calcCumulativeCosts(
   steelInventory: Record<string, number>,
   p50Inventory: Record<string, number>,
@@ -101,6 +120,9 @@ export function calcCumulativeCosts(
   p50Types: P50Type[],
   maxYears: number,
 ): CostPoint[] {
+  const totalSteelUnits = steelTypes.reduce((s, t) => s + (steelInventory[t.id] ?? 0), 0)
+  const hasP50 = p50Types.some(t => (p50Inventory[t.id] ?? 0) > 0)
+
   const points: CostPoint[] = []
 
   for (let year = 0; year <= maxYears; year++) {
@@ -110,15 +132,24 @@ export function calcCumulativeCosts(
       if (qty === 0) continue
       steel += calcSteelCostPerUnitForYears(type, year) * qty
     }
+    if (year > 0) steel += CALLOUT_CHARGE_STEEL * year
 
-    // P50 is purchased at start (counted from year 1 onward)
     let p50 = 0
-    if (year > 0) {
+    if (year > 0 && hasP50) {
       for (const type of p50Types) {
         const qty = p50Inventory[type.id] ?? 0
         if (qty === 0) continue
         p50 += calcP50CostPerUnitForYears(type, year) * qty
       }
+      p50 += totalSteelUnits * P50_UNIT_DISPOSAL
+      // Initial installation callout + one per replacement event up to this year
+      let callouts = 1
+      for (const type of p50Types) {
+        const qty = p50Inventory[type.id] ?? 0
+        if (qty === 0) continue
+        callouts += Math.ceil(year / type.lifeSpan) - 1
+      }
+      p50 += callouts * CALLOUT_CHARGE_P50
     }
 
     points.push({ year, steel, p50 })
@@ -133,7 +164,6 @@ export function findBreakEvenYear(points: CostPoint[]): number | null {
     const prev = points[i - 1]
     const curr = points[i]
     if (curr.steel >= curr.p50) {
-      // Linear interpolation
       const steelDelta = curr.steel - prev.steel
       const p50Delta = curr.p50 - prev.p50
       const divisor = steelDelta - p50Delta
