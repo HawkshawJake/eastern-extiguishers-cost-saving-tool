@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { TrendingDown, Leaf, Calculator, Calendar, Info } from 'lucide-react'
 import Header from '@/components/Header'
 import { useInventory } from '@/context/InventoryContext'
-import { STEEL_TYPES, P50_TYPES } from '@/data/extinguishers'
+import { useConfig } from '@/context/ConfigContext'
 import {
   calcTotals,
   calcCumulativeCosts,
@@ -60,13 +60,14 @@ function MetricRow({
 export default function ResultsPage() {
   const router = useRouter()
   const { company, industry, steelInventory, p50Inventory } = useInventory()
+  const { steelTypes, p50Types, constants } = useConfig()
   const [years, setYears] = useState(8)
   const savedRef = useRef(false)
 
   // Always compute at standard 8 years for the leaderboard entry
   const defaultTotals = useMemo(
-    () => calcTotals(steelInventory, p50Inventory, STEEL_TYPES, P50_TYPES, 8),
-    [steelInventory, p50Inventory],
+    () => calcTotals(steelInventory, p50Inventory, steelTypes, p50Types, 8, constants),
+    [steelInventory, p50Inventory, steelTypes, p50Types, constants],
   )
 
   // Save this visitor's results once per navigation to this page
@@ -88,23 +89,23 @@ export default function ResultsPage() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const totals = useMemo(
-    () => calcTotals(steelInventory, p50Inventory, STEEL_TYPES, P50_TYPES, years),
-    [steelInventory, p50Inventory, years],
+    () => calcTotals(steelInventory, p50Inventory, steelTypes, p50Types, years, constants),
+    [steelInventory, p50Inventory, steelTypes, p50Types, years, constants],
   )
 
   const cumulativePoints = useMemo(
-    () => calcCumulativeCosts(steelInventory, p50Inventory, STEEL_TYPES, P50_TYPES, years),
-    [steelInventory, p50Inventory, years],
+    () => calcCumulativeCosts(steelInventory, p50Inventory, steelTypes, p50Types, years, constants),
+    [steelInventory, p50Inventory, steelTypes, p50Types, years, constants],
   )
 
   const breakEvenYear = useMemo(
-    () => findBreakEvenYear(calcCumulativeCosts(steelInventory, p50Inventory, STEEL_TYPES, P50_TYPES, 30)),
-    [steelInventory, p50Inventory],
+    () => findBreakEvenYear(calcCumulativeCosts(steelInventory, p50Inventory, steelTypes, p50Types, 30, constants)),
+    [steelInventory, p50Inventory, steelTypes, p50Types, constants],
   )
 
   const categoryData = useMemo(
-    () => calcCategoryBreakdown(steelInventory, p50Inventory, STEEL_TYPES, P50_TYPES, years),
-    [steelInventory, p50Inventory, years],
+    () => calcCategoryBreakdown(steelInventory, p50Inventory, steelTypes, p50Types, years, constants),
+    [steelInventory, p50Inventory, steelTypes, p50Types, years, constants],
   )
 
   const hasData = totals.totalSteelUnits > 0 || totals.totalP50Units > 0

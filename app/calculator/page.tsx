@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
 import Header from '@/components/Header'
 import { useInventory } from '@/context/InventoryContext'
+import { useConfig } from '@/context/ConfigContext'
 import {
-  STEEL_TYPES,
-  P50_TYPES,
   STEEL_CATEGORIES,
   P50_CATEGORIES,
   type SteelType,
@@ -111,6 +110,7 @@ function P50Row({
 export default function CalculatorPage() {
   const router = useRouter()
   const { steelInventory, p50Inventory, setSteelQty, setP50Qty } = useInventory()
+  const { steelTypes, p50Types } = useConfig()
 
   // All categories open by default
   const [openSteelCats, setOpenSteelCats] = useState<Set<string>>(new Set(STEEL_CATEGORIES))
@@ -131,10 +131,10 @@ export default function CalculatorPage() {
     })
 
   const steelBadge = (cat: string) =>
-    STEEL_TYPES.filter(t => t.category === cat && (steelInventory[t.id] ?? 0) > 0).length
+    steelTypes.filter(t => t.category === cat && (steelInventory[t.id] ?? 0) > 0).length
 
   const p50Badge = (cat: string) =>
-    P50_TYPES.filter(t => t.category === cat && (p50Inventory[t.id] ?? 0) > 0).length
+    p50Types.filter(t => t.category === cat && (p50Inventory[t.id] ?? 0) > 0).length
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -169,7 +169,7 @@ export default function CalculatorPage() {
                   isOpen={openSteelCats.has(cat)}
                   onToggle={() => toggleSteel(cat)}
                 >
-                  {STEEL_TYPES.filter(t => t.category === cat).map(type => (
+                  {steelTypes.filter(t => t.category === cat).map(type => (
                     <SteelRow
                       key={type.id}
                       type={type}
@@ -201,7 +201,7 @@ export default function CalculatorPage() {
                   isOpen={openP50Cats.has(cat)}
                   onToggle={() => toggleP50(cat)}
                 >
-                  {P50_TYPES.filter(t => t.category === cat).map(type => (
+                  {p50Types.filter(t => t.category === cat).map(type => (
                     <P50Row
                       key={type.id}
                       type={type}

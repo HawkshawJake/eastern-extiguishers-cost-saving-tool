@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Barlow_Condensed, Inter } from 'next/font/google'
 import './globals.css'
 import { InventoryProvider } from '@/context/InventoryContext'
+import { ConfigProvider } from '@/context/ConfigContext'
 
 const barlowCondensed = Barlow_Condensed({
   subsets: ['latin'],
@@ -26,7 +27,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${barlowCondensed.variable} ${inter.variable}`}>
       <body className="bg-gray-50 font-body antialiased">
-        <InventoryProvider>{children}</InventoryProvider>
+        <ConfigProvider>
+          <InventoryProvider>{children}</InventoryProvider>
+        </ConfigProvider>
       </body>
     </html>
   )
