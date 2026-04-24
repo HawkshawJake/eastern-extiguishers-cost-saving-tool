@@ -36,6 +36,14 @@ export async function getTotalSaving(): Promise<number> {
   return (data ?? []).reduce((sum, row) => sum + Number(row.saving), 0)
 }
 
+export async function getAllEntries(): Promise<EventEntry[]> {
+  const { data } = await supabase
+    .from('event_entries')
+    .select('id, company, industry, saving, created_at')
+    .order('created_at', { ascending: false })
+  return data ?? []
+}
+
 export async function resetEntries(): Promise<void> {
   await supabase.from('event_entries').delete().gte('created_at', todayPrefix())
   try {
