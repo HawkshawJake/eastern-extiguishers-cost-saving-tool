@@ -120,35 +120,35 @@ export interface IndustryPreset {
 export const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
   'Banking & Finance': {
     steel: { co2_2k: 6, foam_2l: 4, powder_2k: 2 },
-    p50:   { p50_foam_2l: 3, p50_powder_2k: 1 },
+    p50:   { p50_foam_2l: 4, p50_powder_2k: 2 },
   },
   'Catering & Hospitality': {
     steel: { co2_2k: 2, wetchem_6l: 8, foam_6l: 4, powder_2k: 2 },
-    p50:   { p50_wetchem_6l: 5, p50_foam_6l_eco: 3, p50_powder_2k: 1 },
+    p50:   { p50_wetchem_6l: 8, p50_foam_6l_eco: 4, p50_powder_2k: 2 },
   },
   'Education': {
     steel: { co2_2k: 10, foam_6l: 20, powder_6k: 6, wetchem_6l: 4 },
-    p50:   { p50_foam_6l_eco: 13, p50_powder_6k: 4, p50_wetchem_6l: 3 },
+    p50:   { p50_foam_6l_eco: 20, p50_powder_6k: 6, p50_wetchem_6l: 4 },
   },
   'Food Manufacturing': {
     steel: { co2_2k: 4, wetchem_6l: 12, foam_9l: 10, powder_6k: 6, watermist_6l: 6 },
-    p50:   { p50_wetchem_6l: 8, p50_foam_9l: 6, p50_powder_6k: 4, p50_watermist_6l: 4 },
+    p50:   { p50_wetchem_6l: 12, p50_foam_9l: 10, p50_powder_6k: 6, p50_watermist_6l: 6 },
   },
   'Health & Social Care': {
     steel: { co2_2k: 4, watermist_6l: 12, wetchem_6l: 6, foam_6l: 8 },
-    p50:   { p50_watermist_6l: 9, p50_wetchem_6l: 4, p50_foam_6l_eco: 5 },
+    p50:   { p50_watermist_6l: 12, p50_wetchem_6l: 6, p50_foam_6l_eco: 8 },
   },
   'Industrial & Warehousing': {
     steel: { co2_5k: 6, foam_9l: 20, powder_9k: 10, wetchem_6l: 6, watermist_6l: 4 },
-    p50:   { p50_foam_9l: 13, p50_powder_9k: 6, p50_wetchem_6l: 4, p50_watermist_6l: 3 },
+    p50:   { p50_foam_9l: 20, p50_powder_9k: 10, p50_wetchem_6l: 6, p50_watermist_6l: 4 },
   },
   'Residential Care': {
     steel: { co2_2k: 2, watermist_6l: 8, wetchem_6l: 4, foam_2l: 6 },
-    p50:   { p50_watermist_6l: 5, p50_wetchem_6l: 3, p50_foam_2l: 4 },
+    p50:   { p50_watermist_6l: 8, p50_wetchem_6l: 4, p50_foam_2l: 6 },
   },
   'Retail': {
     steel: { co2_2k: 2, foam_6l: 8, powder_6k: 4, wetchem_6l: 2 },
-    p50:   { p50_foam_6l_eco: 5, p50_powder_6k: 3, p50_wetchem_6l: 1 },
+    p50:   { p50_foam_6l_eco: 8, p50_powder_6k: 4, p50_wetchem_6l: 2 },
   },
   'Other': {
     steel: {},
