@@ -82,6 +82,8 @@ export default function ResultsPage() {
       company: company || 'Anonymous',
       industry: industry || 'Other',
       saving: defaultTotals.saving,
+      steel_inventory: steelInventory,
+      p50_inventory: p50Inventory,
     }).catch(() => { /* non-critical, ignore network errors */ })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

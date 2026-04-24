@@ -6,6 +6,8 @@ export interface EventEntry {
   industry: string
   saving: number
   created_at: string
+  steel_inventory?: Record<string, number>
+  p50_inventory?: Record<string, number>
 }
 
 function todayPrefix(): string {
@@ -13,7 +15,7 @@ function todayPrefix(): string {
 }
 
 export async function addEntry(
-  entry: Pick<EventEntry, 'company' | 'industry' | 'saving'>,
+  entry: Pick<EventEntry, 'company' | 'industry' | 'saving' | 'steel_inventory' | 'p50_inventory'>,
 ): Promise<void> {
   await supabase.from('event_entries').insert(entry)
 }
