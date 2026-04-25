@@ -96,14 +96,15 @@ export const STEEL_TO_P50_MAP: Record<string, string | null> = {
 }
 
 export const INDUSTRIES = [
-  'Banking & Finance',
-  'Catering & Hospitality',
-  'Education',
-  'Food Manufacturing',
-  'Health & Social Care',
-  'Industrial & Warehousing',
-  'Residential Care',
+  'Care',
+  'Health',
+  'Hospitality',
+  'Iconic Institution',
+  'Local Government',
   'Retail',
+  'Schools',
+  'Transport',
+  'Universities',
   'Other',
 ]
 
@@ -116,37 +117,41 @@ export interface IndustryPreset {
 }
 
 export const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
-  'Banking & Finance': {
-    steel: { co2_2k: 6, foam_2l: 4, powder_2k: 2 },
-    p50:   { p50_foam_2l: 4, p50_powder_2k: 2 },
+  'Care': {
+    steel: { co2_2k: 454, foam_6l: 391, powder_6k: 51, wetchem_6l: 11 },
+    p50:   { p50_foam_6l_eco: 485, p50_powder_6k: 51, p50_wetchem_6l: 11 },
   },
-  'Catering & Hospitality': {
-    steel: { co2_2k: 2, wetchem_6l: 8, foam_6l: 4, powder_2k: 2 },
-    p50:   { p50_wetchem_6l: 8, p50_foam_6l_eco: 4, p50_powder_2k: 2 },
+  'Health': {
+    steel: { co2_2k: 716, water_9l: 521, foam_6l: 69, powder_6k: 31, wetchem_6l: 3 },
+    p50:   { p50_foam_6l_eco: 820, p50_wetchem_6l: 3 },
   },
-  'Education': {
-    steel: { co2_2k: 10, foam_6l: 20, powder_6k: 6, wetchem_6l: 4 },
-    p50:   { p50_foam_6l_eco: 20, p50_powder_6k: 6, p50_wetchem_6l: 4 },
+  'Hospitality': {
+    steel: { co2_2k: 1725, co2_5k: 23, water_6l: 126, water_9l: 6, foam_3l: 636, foam_6l: 983, foam_9l: 153, powder_4k: 78, powder_6k: 25, wetchem_6l: 363 },
+    p50:   { p50_foam_6l_eco: 2207, p50_powder_6k: 92, p50_wetchem_6l: 320 },
   },
-  'Food Manufacturing': {
-    steel: { co2_2k: 4, wetchem_6l: 12, foam_9l: 10, powder_6k: 6, watermist_6l: 6 },
-    p50:   { p50_wetchem_6l: 12, p50_foam_9l: 10, p50_powder_6k: 6, p50_watermist_6l: 6 },
+  'Iconic Institution': {
+    steel: { co2_2k: 526, co2_5k: 12, water_6l: 538, water_9l: 14, foam_6l: 106, foam_9l: 5, powder_6k: 9 },
+    p50:   { p50_foam_6l_eco: 620 },
   },
-  'Health & Social Care': {
-    steel: { co2_2k: 4, watermist_6l: 12, wetchem_6l: 6, foam_6l: 8 },
-    p50:   { p50_watermist_6l: 12, p50_wetchem_6l: 6, p50_foam_6l_eco: 8 },
-  },
-  'Industrial & Warehousing': {
-    steel: { co2_5k: 6, foam_9l: 20, powder_9k: 10, wetchem_6l: 6, watermist_6l: 4 },
-    p50:   { p50_foam_9l: 20, p50_powder_9k: 10, p50_wetchem_6l: 6, p50_watermist_6l: 4 },
-  },
-  'Residential Care': {
-    steel: { co2_2k: 2, watermist_6l: 8, wetchem_6l: 4, foam_2l: 6 },
-    p50:   { p50_watermist_6l: 8, p50_wetchem_6l: 4, p50_foam_2l: 6 },
+  'Local Government': {
+    steel: { co2_2k: 80, water_6l: 72, foam_6l: 81, powder_6k: 12 },
+    p50:   { p50_foam_6l_eco: 162, p50_powder_6k: 9 },
   },
   'Retail': {
-    steel: { co2_2k: 2, foam_6l: 8, powder_6k: 4, wetchem_6l: 2 },
-    p50:   { p50_foam_6l_eco: 8, p50_powder_6k: 4, p50_wetchem_6l: 2 },
+    steel: { co2_2k: 4141, foam_6l: 8161, foam_9l: 215 },
+    p50:   { p50_foam_6l_eco: 6341 },
+  },
+  'Schools': {
+    steel: { co2_2k: 347, water_3l: 185, water_6l: 115, water_9l: 1, foam_2l: 1, foam_6l: 66, foam_9l: 1, powder_2k: 21, powder_4k: 23, powder_6k: 11, wetchem_6l: 7 },
+    p50:   { p50_foam_6l_eco: 352, p50_powder_2k: 13, p50_powder_6k: 19, p50_wetchem_6l: 1 },
+  },
+  'Transport': {
+    steel: { co2_2k: 293, co2_5k: 64, water_6l: 14, water_9l: 13, foam_2l: 8, foam_6l: 262, foam_9l: 16, powder_2k: 36, powder_6k: 163, powder_9k: 80 },
+    p50:   { p50_foam_2l: 34, p50_foam_6l_eco: 322, p50_powder_2k: 50, p50_powder_6k: 210 },
+  },
+  'Universities': {
+    steel: { co2_2k: 66, co2_5k: 5, water_6l: 86, water_9l: 5, foam_6l: 23, powder_2k: 346, powder_6k: 11, powder_9k: 1, wetchem_6l: 1 },
+    p50:   { p50_foam_2l: 79, p50_foam_6l_eco: 128, p50_wetchem_6l: 1 },
   },
   'Other': {
     steel: {},
