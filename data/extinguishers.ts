@@ -56,7 +56,7 @@ export const STEEL_TYPES: SteelType[] = [
 
 export const P50_TYPES: P50Type[] = [
   { id: 'p50_foam_2l',      label: '2L Foam Composite',         clientCost: 65.38,  lifeSpan: 10, category: 'Foam' },
-  { id: 'p50_foam_6l_eco',  label: '6L ECO-Foam Composite',     clientCost: 133.64, lifeSpan: 8,  category: 'Foam' },
+  { id: 'p50_foam_6l_eco',  label: '6L ECO-Foam Composite',     clientCost: 133.64, lifeSpan: 10, category: 'Foam' },
   { id: 'p50_foam_9l',      label: '9L Foam Composite',         clientCost: 152.73, lifeSpan: 10, category: 'Foam' },
   { id: 'p50_foam_6l_blk',  label: '6L Foam Composite Black',   clientCost: 190.91, lifeSpan: 10, category: 'Foam' },
 
@@ -115,8 +115,6 @@ export interface IndustryPreset {
   p50: Record<string, number>
 }
 
-// Steel quantities reflect a typical site; P50 quantities reflect the recommended
-// switch (fewer units needed due to higher ratings — approx. 65–70% of mappable steel).
 export const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
   'Banking & Finance': {
     steel: { co2_2k: 6, foam_2l: 4, powder_2k: 2 },
