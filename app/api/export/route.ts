@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('event_entries')
-    .select('company, industry, saving, created_at, steel_inventory, p50_inventory')
+    .select('company, industry, saving, created_at, steel_inventory, p50_inventory, email, phone')
     .order('created_at', { ascending: false })
 
   if (error) return new NextResponse('Database error', { status: 500 })
@@ -27,12 +27,14 @@ export async function GET(req: NextRequest) {
   }
 
   const rows = [
-    ['Date/Time', 'Company', 'Industry', 'Saving (£)', 'Steel Extinguishers', 'P50 Extinguishers'],
+    ['Date/Time', 'Company', 'Industry', 'Saving (£)', 'Email', 'Phone', 'Steel Extinguishers', 'P50 Extinguishers'],
     ...(data ?? []).map(e => [
       new Date(e.created_at).toLocaleString('en-GB'),
       e.company,
       e.industry,
       Math.round(e.saving).toString(),
+      e.email ?? '',
+      e.phone ?? '',
       summariseInventory(e.steel_inventory, STEEL_TYPES),
       summariseInventory(e.p50_inventory, P50_TYPES),
     ]),

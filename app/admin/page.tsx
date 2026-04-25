@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Download, Lock, ChevronDown, ChevronUp, Leaf, Settings, Users, RotateCcw, Save } from 'lucide-react'
+import { Download, Lock, ChevronDown, ChevronUp, Leaf, Settings, Users, RotateCcw, Save, Mail } from 'lucide-react'
 import Header from '@/components/Header'
 import { getAllEntries, type EventEntry } from '@/lib/eventStore'
 import { STEEL_TYPES, P50_TYPES } from '@/data/extinguishers'
@@ -29,7 +29,7 @@ function EntryDetail({ entry }: { entry: EventEntry }) {
   }
 
   return (
-    <div className="px-4 py-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="px-4 py-4 grid grid-cols-1 md:grid-cols-4 gap-6">
       <div>
         <p className="font-body text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
           Steel Extinguishers
@@ -64,6 +64,23 @@ function EntryDetail({ entry }: { entry: EventEntry }) {
           </ul>
         )}
       </div>
+      {/* Contact info */}
+      <div>
+        <p className="font-body text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
+          Contact
+        </p>
+        {entry.email ? (
+          <div className="space-y-1">
+            <p className="font-body text-sm text-brand-black break-all">{entry.email}</p>
+            {entry.phone && (
+              <p className="font-body text-sm text-gray-500">{entry.phone}</p>
+            )}
+          </div>
+        ) : (
+          <p className="font-body text-sm text-gray-400 italic">No contact details</p>
+        )}
+      </div>
+
       <div className="space-y-2">
         <p className="font-body text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
           8-Year Summary
@@ -478,6 +495,9 @@ export default function AdminPage() {
                       <th className="text-left font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-4 py-3">Company</th>
                       <th className="text-left font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-4 py-3">Industry</th>
                       <th className="text-right font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-4 py-3">Saving</th>
+                      <th className="w-8 text-center font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-2 py-3">
+                        <Mail size={13} />
+                      </th>
                       <th className="w-8" />
                     </tr>
                   </thead>
@@ -501,13 +521,19 @@ export default function AdminPage() {
                             <td className="font-heading font-bold text-sm text-brand-red text-right px-4 py-3 tabular-nums">
                               {formatCurrency(entry.saving)}
                             </td>
+                            <td className="px-2 py-3 text-center">
+                              {entry.email
+                                ? <Mail size={13} className="text-eco-green mx-auto" />
+                                : <span className="text-gray-200">—</span>
+                              }
+                            </td>
                             <td className="px-3 py-3 text-gray-300">
                               {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </td>
                           </tr>
                           {isExpanded && (
                             <tr key={`${entry.id}-detail`} className="bg-gray-50 border-b border-gray-100">
-                              <td colSpan={5}>
+                              <td colSpan={6}>
                                 <EntryDetail entry={entry} />
                               </td>
                             </tr>

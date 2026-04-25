@@ -8,6 +8,8 @@ export interface EventEntry {
   created_at: string
   steel_inventory?: Record<string, number>
   p50_inventory?: Record<string, number>
+  email?: string
+  phone?: string
 }
 
 function todayPrefix(): string {
@@ -16,8 +18,27 @@ function todayPrefix(): string {
 
 export async function addEntry(
   entry: Pick<EventEntry, 'company' | 'industry' | 'saving' | 'steel_inventory' | 'p50_inventory'>,
+): Promise<string> {
+  const { data } = await supabase
+    .from('event_entries')
+    .insert(entry)
+    .select('id')
+    .single()
+  return data?.id ?? ''
+}
+
+export async function updateEntryContact(
+  id: string,
+  contact: { email: string; phone?: string; company?: string },
 ): Promise<void> {
-  await supabase.from('event_entries').insert(entry)
+  await supabase
+    .from('event_entries')
+    .update({
+      email: contact.email,
+      phone: contact.phone || null,
+      ...(contact.company ? { company: contact.company } : {}),
+    })
+    .eq('id', id)
 }
 
 export async function getLeaderboard(limit = 10): Promise<EventEntry[]> {
@@ -41,7 +62,7 @@ export async function getTotalSaving(): Promise<number> {
 export async function getAllEntries(): Promise<EventEntry[]> {
   const { data } = await supabase
     .from('event_entries')
-    .select('id, company, industry, saving, created_at, steel_inventory, p50_inventory')
+    .select('id, company, industry, saving, created_at, steel_inventory, p50_inventory, email, phone')
     .order('created_at', { ascending: false })
   return data ?? []
 }
@@ -50,7 +71,7 @@ export async function resetEntries(): Promise<void> {
   await supabase.from('event_entries').delete().gte('created_at', todayPrefix())
   try {
     for (const key of Object.keys(sessionStorage)) {
-      if (key.startsWith('ee_saved_')) sessionStorage.removeItem(key)
+      if (key.startsWith('ee_')) sessionStorage.removeItem(key)
     }
   } catch { /* ignore */ }
 }

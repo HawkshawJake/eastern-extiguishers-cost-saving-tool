@@ -15,7 +15,8 @@ import {
   formatCurrency,
   formatPercent,
 } from '@/lib/calculations'
-import { addEntry } from '@/lib/eventStore'
+import { addEntry, updateEntryContact } from '@/lib/eventStore'
+import LeadCaptureModal from '@/components/LeadCaptureModal'
 
 // SSR-safe dynamic imports for recharts components
 const CumulativeCostChart = dynamic(
@@ -63,6 +64,8 @@ export default function ResultsPage() {
   const { steelTypes, p50Types, constants } = useConfig()
   const [years, setYears] = useState(8)
   const savedRef = useRef(false)
+  const entryIdRef = useRef('')
+  const [showModal, setShowModal] = useState(false)
 
   // Always compute at standard 8 years for the leaderboard entry
   const defaultTotals = useMemo(
@@ -72,10 +75,13 @@ export default function ResultsPage() {
 
   // Save this visitor's results once per navigation to this page
   useEffect(() => {
+    // Restore entry ID if this session already saved (e.g. page refresh)
+    const storedId = sessionStorage.getItem('ee_entry_id')
+    if (storedId) entryIdRef.current = storedId
+
     if (savedRef.current) return
     if (defaultTotals.saving <= 0) return
     savedRef.current = true
-    // Deduplicate across refreshes using a session key
     const key = `ee_saved_${Math.round(defaultTotals.totalSteelCost)}_${Math.round(defaultTotals.totalP50Cost)}`
     if (sessionStorage.getItem(key)) return
     sessionStorage.setItem(key, '1')
@@ -85,8 +91,33 @@ export default function ResultsPage() {
       saving: defaultTotals.saving,
       steel_inventory: steelInventory,
       p50_inventory: p50Inventory,
-    }).catch(() => { /* non-critical, ignore network errors */ })
+    }).then(id => {
+      if (id) {
+        entryIdRef.current = id
+        sessionStorage.setItem('ee_entry_id', id)
+      }
+    }).catch(() => { /* non-critical */ })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Show lead capture modal after a short delay
+  useEffect(() => {
+    if (defaultTotals.saving <= 0) return
+    if (sessionStorage.getItem('ee_lead_done')) return
+    const timer = setTimeout(() => setShowModal(true), 3000)
+    return () => clearTimeout(timer)
+  }, [defaultTotals.saving])
+
+  async function handleLeadSubmit(data: { company: string; email: string; phone: string }) {
+    if (entryIdRef.current) {
+      await updateEntryContact(entryIdRef.current, data)
+    }
+    sessionStorage.setItem('ee_lead_done', '1')
+  }
+
+  function handleModalDismiss() {
+    sessionStorage.setItem('ee_lead_done', '1')
+    setShowModal(false)
+  }
 
   const totals = useMemo(
     () => calcTotals(steelInventory, p50Inventory, steelTypes, p50Types, years, constants),
@@ -138,6 +169,15 @@ export default function ResultsPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header step={3} />
+
+      {showModal && (
+        <LeadCaptureModal
+          initialCompany={company}
+          saving={formatCurrency(totals.saving)}
+          onSubmit={handleLeadSubmit}
+          onDismiss={handleModalDismiss}
+        />
+      )}
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-5 py-8 md:py-12">
         {contextLabel && (
