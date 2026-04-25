@@ -133,7 +133,7 @@ function SettingsTab({
   exportToken: string
   onSaved: () => void
 }) {
-  const { constants, steelTypes, p50Types } = useConfig()
+  const { constants, steelTypes, p50Types, reloadConfig } = useConfig()
   const [draft, setDraft] = useState<SiteConfig>({ constants, steelTypes, p50Types })
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'ok' | 'error'>('idle')
@@ -175,6 +175,7 @@ function SettingsTab({
     setSaving(false)
     if (res.ok) {
       setSaveStatus('ok')
+      await reloadConfig()
       onSaved()
       setTimeout(() => setSaveStatus('idle'), 3000)
     } else {
