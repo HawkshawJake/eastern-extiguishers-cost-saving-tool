@@ -31,7 +31,7 @@ export async function updateEntryContact(
   id: string,
   contact: { email: string; phone?: string; company?: string },
 ): Promise<void> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('event_entries')
     .update({
       email: contact.email,
@@ -39,7 +39,9 @@ export async function updateEntryContact(
       ...(contact.company ? { company: contact.company } : {}),
     })
     .eq('id', id)
+    .select('id')
   if (error) throw new Error(error.message)
+  if (!data || data.length === 0) throw new Error('Entry not found — contact details could not be saved.')
 }
 
 export async function getLeaderboard(limit = 10): Promise<EventEntry[]> {

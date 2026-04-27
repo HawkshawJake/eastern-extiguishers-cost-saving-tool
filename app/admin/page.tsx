@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Download, Lock, ChevronDown, ChevronUp, Leaf, Settings, Users, RotateCcw, Save, Mail } from 'lucide-react'
+import { Download, Lock, ChevronDown, ChevronUp, Leaf, Settings, Users, RotateCcw, Save, Mail, RefreshCw } from 'lucide-react'
 import Header from '@/components/Header'
 import { getAllEntries, type EventEntry } from '@/lib/eventStore'
 import { STEEL_TYPES, P50_TYPES } from '@/data/extinguishers'
@@ -471,16 +471,26 @@ export default function AdminPage() {
                   </p>
                 )}
               </div>
-              {exportToken && (
-                <a
-                  href={`/api/export?token=${exportToken}`}
-                  download
-                  className="btn-primary flex items-center gap-2 no-underline"
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={loadEntries}
+                  disabled={loadingEntries}
+                  className="btn-secondary flex items-center gap-2"
                 >
-                  <Download size={16} />
-                  Export CSV
-                </a>
-              )}
+                  <RefreshCw size={14} className={loadingEntries ? 'animate-spin' : ''} />
+                  Refresh
+                </button>
+                {exportToken && (
+                  <a
+                    href={`/api/export?token=${exportToken}`}
+                    download
+                    className="btn-primary flex items-center gap-2 no-underline"
+                  >
+                    <Download size={16} />
+                    Export CSV
+                  </a>
+                )}
+              </div>
             </div>
 
             {loadingEntries ? (
