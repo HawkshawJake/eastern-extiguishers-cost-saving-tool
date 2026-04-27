@@ -187,22 +187,27 @@ export default function ResultsPage() {
         )}
 
         {/* Hero saving card */}
-        <div className="bg-brand-dark rounded-md p-8 md:p-12 text-center mb-5">
-          <div className="flex justify-center mb-3">
-            <TrendingDown className="text-brand-red-light" size={32} strokeWidth={2} />
-          </div>
-          <p className="font-body text-white/50 uppercase tracking-widest text-xs mb-3">
-            You Could Save
-          </p>
-          <p className="font-heading font-black text-5xl md:text-7xl text-brand-red-light leading-none tabular-nums">
-            {formatCurrency(totals.saving)}
-          </p>
-          <p className="font-body text-white/70 mt-4 text-lg">over {years} years</p>
-          {totals.percentSaving > 0 && (
-            <p className="font-body text-white/40 text-sm mt-1">
-              {formatPercent(totals.percentSaving)} reduction on your current costs
+        <div className="rounded-xl text-center mb-5 shadow-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #B8241C 0%, #6B1210 100%)' }}>
+          <div className="px-8 md:px-14 py-10 md:py-14">
+            <p className="font-body text-white/60 uppercase tracking-widest text-xs mb-5">
+              You Could Save
             </p>
-          )}
+            <p className="font-heading font-black text-6xl md:text-8xl text-white leading-none tabular-nums">
+              {formatCurrency(totals.saving)}
+            </p>
+            <p className="font-body text-white/70 mt-5 text-xl">over {years} years</p>
+            {totals.percentSaving > 0 && (
+              <p className="font-body text-white/50 text-sm mt-2">
+                {formatPercent(totals.percentSaving)} reduction on your current costs
+              </p>
+            )}
+          </div>
+          <div className="bg-black/20 px-8 py-3 flex items-center justify-center gap-2">
+            <TrendingDown className="text-white/60" size={14} strokeWidth={2} />
+            <p className="font-body text-white/60 text-xs uppercase tracking-widest">
+              P50 Composite vs Traditional Steel
+            </p>
+          </div>
         </div>
 
         {/* Year slider */}

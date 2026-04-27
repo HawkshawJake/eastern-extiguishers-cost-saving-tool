@@ -80,18 +80,21 @@ export default function WelcomePage() {
                 <label className="block text-xs font-body font-semibold uppercase tracking-widest text-gray-400 mb-2">
                   Your Industry
                 </label>
-                <select
-                  className="input-field"
-                  value={industry}
-                  onChange={e => setIndustry(e.target.value)}
-                >
-                  <option value="">Select your industry</option>
+                <div className="grid grid-cols-2 gap-2">
                   {INDUSTRIES.map(ind => (
-                    <option key={ind} value={ind}>
+                    <button
+                      key={ind}
+                      onClick={() => setIndustry(ind)}
+                      className={`px-3 py-2.5 rounded-sm text-sm font-body font-semibold transition-all border text-left leading-tight ${
+                        industry === ind
+                          ? 'bg-brand-red text-white border-brand-red'
+                          : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-brand-red hover:text-brand-red'
+                      }`}
+                    >
                       {ind}
-                    </option>
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
 
               {hasPreset ? (
