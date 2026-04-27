@@ -123,7 +123,7 @@ export const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
   },
   'Health': {
     steel: { co2_2k: 716, water_9l: 521, foam_6l: 69, powder_6k: 31, wetchem_6l: 3 },
-    p50:   { p50_foam_6l_eco: 820, p50_wetchem_6l: 3 },
+    p50:   { p50_foam_6l_eco: 820, p50_powder_6k: 31, p50_wetchem_6l: 3 },
   },
   'Hospitality': {
     steel: { co2_2k: 1725, co2_5k: 23, water_6l: 126, water_9l: 6, foam_3l: 636, foam_6l: 983, foam_9l: 153, powder_4k: 78, powder_6k: 25, wetchem_6l: 363 },
