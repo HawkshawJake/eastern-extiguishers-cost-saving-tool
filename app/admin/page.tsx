@@ -503,7 +503,7 @@ export default function AdminPage() {
                 )}
                 {confirmReset ? (
                   <div className="flex items-center gap-2">
-                    <span className="font-body text-sm text-gray-500">Reset today's data?</span>
+                    <span className="font-body text-sm text-gray-500">Delete all entries?</span>
                     <button
                       onClick={handleReset}
                       disabled={resetting}
@@ -524,7 +524,7 @@ export default function AdminPage() {
                     className="btn-secondary flex items-center gap-2 text-gray-400 hover:text-brand-red"
                   >
                     <Trash2 size={14} />
-                    Reset Day
+                    Clear All
                   </button>
                 )}
               </div>

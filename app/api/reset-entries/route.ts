@@ -6,11 +6,10 @@ export async function POST(req: NextRequest) {
   if (!process.env.EXPORT_SECRET || token !== process.env.EXPORT_SECRET) {
     return NextResponse.json({ ok: false }, { status: 401 })
   }
-  const today = new Date().toISOString().split('T')[0]
   const { error } = await supabaseAdmin
     .from('event_entries')
     .delete()
-    .gte('created_at', today)
+    .neq('id', '00000000-0000-0000-0000-000000000000')
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
