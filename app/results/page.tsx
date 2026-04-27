@@ -200,7 +200,7 @@ export default function ResultsPage() {
                 Cumulative Cost Over {years} Years
               </h3>
               <div className="flex-1" style={{ minHeight: 200 }}>
-                <CumulativeCostChart data={cumulativePoints} breakEvenYear={breakEvenYear} height="100%" />
+                <CumulativeCostChart data={cumulativePoints} breakEvenYear={breakEvenYear} height={260} />
               </div>
             </div>
 

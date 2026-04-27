@@ -38,7 +38,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 interface Props {
   data: CostPoint[]
   breakEvenYear: number | null
-  height?: number | string
+  height?: number
 }
 
 export default function CumulativeCostChart({ data, breakEvenYear, height = 300 }: Props) {
