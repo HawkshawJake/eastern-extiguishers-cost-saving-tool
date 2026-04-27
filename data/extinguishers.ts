@@ -131,7 +131,7 @@ export const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
   },
   'Iconic Institution': {
     steel: { co2_2k: 526, co2_5k: 12, water_6l: 538, water_9l: 14, foam_6l: 106, foam_9l: 5, powder_6k: 9 },
-    p50:   { p50_foam_6l_eco: 620 },
+    p50:   { p50_foam_6l_eco: 620, p50_powder_6k: 9 },
   },
   'Local Government': {
     steel: { co2_2k: 80, water_6l: 72, foam_6l: 81, powder_6k: 12 },
