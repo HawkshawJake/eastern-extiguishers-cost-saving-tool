@@ -288,19 +288,6 @@ export default function ResultsPage() {
           <CumulativeCostChart data={cumulativePoints} breakEvenYear={breakEvenYear} />
         </div>
 
-        {/* Steel → P50 mapping diagram */}
-        <div className="bg-white rounded-md border border-gray-200 shadow-sm p-5 mb-5">
-          <h3 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black mb-4">
-            Your Steel → P50 Conversion
-          </h3>
-          <InventoryMapDiagram
-            steelInventory={steelInventory}
-            p50Inventory={p50Inventory}
-            steelTypes={steelTypes}
-            p50Types={p50Types}
-          />
-        </div>
-
         {/* Cost & unit summary */}
         <div className="bg-white rounded-md border border-gray-200 shadow-sm p-5 mb-5">
           <h3 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black mb-4">
