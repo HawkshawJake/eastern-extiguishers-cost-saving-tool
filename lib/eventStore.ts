@@ -1,5 +1,3 @@
-import { supabase } from './supabase'
-
 export interface EventEntry {
   id: string
   company: string
@@ -15,12 +13,13 @@ export interface EventEntry {
 export async function addEntry(
   entry: Pick<EventEntry, 'company' | 'industry' | 'saving' | 'steel_inventory' | 'p50_inventory'> & { email?: string; phone?: string },
 ): Promise<string> {
-  const { data } = await supabase
-    .from('event_entries')
-    .insert(entry)
-    .select('id')
-    .single()
-  return data?.id ?? ''
+  const res = await fetch('/api/add-entry', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(entry),
+  })
+  const json = await res.json()
+  return json.id ?? ''
 }
 
 export async function updateEntryContact(
