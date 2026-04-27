@@ -84,7 +84,7 @@ export const STEEL_TO_P50_MAP: Record<string, string | null> = {
   foam_2l:       'p50_foam_2l',
   foam_3l:       null,
   foam_6l:       'p50_foam_6l_eco',
-  foam_9l:       'p50_foam_9l',
+  foam_9l:       'p50_foam_6l_eco',
   powder_2k:     'p50_powder_2k',
   powder_4k:     null,
   powder_6k:     'p50_powder_6k',
