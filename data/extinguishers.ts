@@ -55,20 +55,21 @@ export const STEEL_TYPES: SteelType[] = [
 ]
 
 export const P50_TYPES: P50Type[] = [
-  { id: 'p50_foam_6l_eco',  label: '6L ECO Foam Composite (Red Casing)',   clientCost: 141.50, lifeSpan: 10, category: 'Foam' },
-  { id: 'p50_foam_9l',      label: '9L ECO Foam Composite (Red Casing)',   clientCost: 170.37, lifeSpan: 10, category: 'Foam' },
-  { id: 'p50_foam_6l_blk',  label: '6L SFF (A-Foam) Composite',           clientCost: 126.33, lifeSpan: 10, category: 'Foam' },
+  { id: 'p50_foam_6l_eco',  label: '6L ECO Foam (Red Casing)',             clientCost: 141.50, lifeSpan: 10, category: 'Foam' },
+  { id: 'p50_foam_6l_blk',  label: '6L ECO Foam (Black Casing)',           clientCost: 202.13, lifeSpan: 10, category: 'Foam' },
+  { id: 'p50_foam_9l',      label: '9L ECO Foam (Red Casing)',             clientCost: 170.37, lifeSpan: 10, category: 'Foam' },
+  { id: 'p50_foam_6l_sff',  label: '6L SFF (A-Foam)',                      clientCost: 126.33, lifeSpan: 10, category: 'Foam' },
 
-  { id: 'p50_powder_2k',    label: '2KG Powder Composite',                 clientCost: 59.34,  lifeSpan: 10, category: 'Powder' },
-  { id: 'p50_powder_6k',    label: '6KG Powder Composite',                 clientCost: 126.33, lifeSpan: 10, category: 'Powder' },
-  { id: 'p50_powder_9k',    label: '9KG Powder Composite',                 clientCost: 161.70, lifeSpan: 10, category: 'Powder' },
+  { id: 'p50_powder_2k',    label: '2KG Powder',                           clientCost: 59.34,  lifeSpan: 10, category: 'Powder' },
+  { id: 'p50_powder_6k',    label: '6KG Powder',                           clientCost: 126.33, lifeSpan: 10, category: 'Powder' },
+  { id: 'p50_powder_9k',    label: '9KG Powder',                           clientCost: 161.70, lifeSpan: 10, category: 'Powder' },
 
-  { id: 'p50_wetchem_6l',   label: '6L F-Class / Wet Chemical Composite',  clientCost: 209.33, lifeSpan: 10, category: 'Wet Chemical' },
+  { id: 'p50_wetchem_6l',   label: '6L F-Class / Wet Chemical',            clientCost: 209.33, lifeSpan: 10, category: 'Wet Chemical' },
 
-  { id: 'p50_watermist_2l', label: '2L Water Mist Composite',              clientCost: 61.77,  lifeSpan: 10, category: 'Water Mist' },
-  { id: 'p50_watermist_6l', label: '6L Water Mist Composite',              clientCost: 105.48, lifeSpan: 10, category: 'Water Mist' },
+  { id: 'p50_watermist_2l', label: '2L Water Mist',                        clientCost: 61.77,  lifeSpan: 10, category: 'Water Mist' },
+  { id: 'p50_watermist_6l', label: '6L Water Mist',                        clientCost: 105.48, lifeSpan: 10, category: 'Water Mist' },
 
-  { id: 'p50_avd_6l',       label: '6L AVD Composite',                     clientCost: 369.29, lifeSpan: 10, category: 'AVD' },
+  { id: 'p50_avd_6l',       label: '6L AVD',                               clientCost: 369.29, lifeSpan: 10, category: 'AVD' },
 ]
 
 export const STEEL_TO_P50_MAP: Record<string, string | null> = {
