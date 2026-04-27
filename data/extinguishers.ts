@@ -55,21 +55,19 @@ export const STEEL_TYPES: SteelType[] = [
 ]
 
 export const P50_TYPES: P50Type[] = [
-  { id: 'p50_foam_6l_eco',  label: '6L ECO Foam (Red Casing)',             clientCost: 141.50, lifeSpan: 10, category: 'Foam' },
-  { id: 'p50_foam_6l_blk',  label: '6L ECO Foam (Black Casing)',           clientCost: 202.13, lifeSpan: 10, category: 'Foam' },
-  { id: 'p50_foam_9l',      label: '9L ECO Foam (Red Casing)',             clientCost: 170.37, lifeSpan: 10, category: 'Foam' },
-  { id: 'p50_foam_6l_sff',  label: '6L SFF (A-Foam)',                      clientCost: 126.33, lifeSpan: 10, category: 'Foam' },
+  { id: 'p50_foam_2l',      label: '2L Foam Composite',         clientCost: 65.38,  lifeSpan: 10, category: 'Foam' },
+  { id: 'p50_foam_6l_eco',  label: '6L ECO-Foam Composite',     clientCost: 133.64, lifeSpan: 10, category: 'Foam' },
+  { id: 'p50_foam_9l',      label: '9L Foam Composite',         clientCost: 152.73, lifeSpan: 10, category: 'Foam' },
+  { id: 'p50_foam_6l_blk',  label: '6L Foam Composite Black',   clientCost: 190.91, lifeSpan: 10, category: 'Foam' },
 
-  { id: 'p50_powder_2k',    label: '2KG Powder',                           clientCost: 59.34,  lifeSpan: 10, category: 'Powder' },
-  { id: 'p50_powder_6k',    label: '6KG Powder',                           clientCost: 126.33, lifeSpan: 10, category: 'Powder' },
-  { id: 'p50_powder_9k',    label: '9KG Powder',                           clientCost: 161.70, lifeSpan: 10, category: 'Powder' },
+  { id: 'p50_powder_2k',    label: '2K Powder Composite',       clientCost: 65.38,  lifeSpan: 10, category: 'Powder' },
+  { id: 'p50_powder_6k',    label: '6K Powder Composite',       clientCost: 119.33, lifeSpan: 10, category: 'Powder' },
+  { id: 'p50_powder_9k',    label: '9K Powder Composite',       clientCost: 152.73, lifeSpan: 10, category: 'Powder' },
 
-  { id: 'p50_wetchem_6l',   label: '6L F-Class / Wet Chemical',            clientCost: 209.33, lifeSpan: 10, category: 'Wet Chemical' },
+  { id: 'p50_wetchem_6l',   label: '6L Wet Chemical Composite', clientCost: 159.95, lifeSpan: 10, category: 'Wet Chemical' },
 
-  { id: 'p50_watermist_2l', label: '2L Water Mist',                        clientCost: 61.77,  lifeSpan: 10, category: 'Water Mist' },
-  { id: 'p50_watermist_6l', label: '6L Water Mist',                        clientCost: 105.48, lifeSpan: 10, category: 'Water Mist' },
-
-  { id: 'p50_avd_6l',       label: '6L AVD',                               clientCost: 369.29, lifeSpan: 10, category: 'AVD' },
+  { id: 'p50_watermist_2l', label: '2L Water Mist Composite',   clientCost: 79.13,  lifeSpan: 10, category: 'Water Mist' },
+  { id: 'p50_watermist_6l', label: '6L Water Mist Composite',   clientCost: 123.71, lifeSpan: 10, category: 'Water Mist' },
 ]
 
 export const STEEL_TO_P50_MAP: Record<string, string | null> = {
@@ -83,7 +81,7 @@ export const STEEL_TO_P50_MAP: Record<string, string | null> = {
   watermist_6l:  'p50_watermist_6l',
   watermist_9l:  null,
   foam_1l:       null,
-  foam_2l:       null,
+  foam_2l:       'p50_foam_2l',
   foam_3l:       null,
   foam_6l:       'p50_foam_6l_eco',
   foam_9l:       'p50_foam_9l',
@@ -111,7 +109,7 @@ export const INDUSTRIES = [
 ]
 
 export const STEEL_CATEGORIES = ['CO2', 'Water', 'Water Mist', 'Foam', 'Powder', 'Wet Chemical']
-export const P50_CATEGORIES = ['Foam', 'Powder', 'Wet Chemical', 'Water Mist', 'AVD']
+export const P50_CATEGORIES = ['Foam', 'Powder', 'Wet Chemical', 'Water Mist']
 
 export interface IndustryPreset {
   steel: Record<string, number>
@@ -149,11 +147,11 @@ export const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
   },
   'Transport': {
     steel: { co2_2k: 293, co2_5k: 64, water_6l: 14, water_9l: 13, foam_2l: 8, foam_6l: 262, foam_9l: 16, powder_2k: 36, powder_6k: 163, powder_9k: 80 },
-    p50:   { p50_foam_6l_eco: 322, p50_powder_2k: 50, p50_powder_6k: 210 },
+    p50:   { p50_foam_2l: 34, p50_foam_6l_eco: 322, p50_powder_2k: 50, p50_powder_6k: 210 },
   },
   'Universities': {
     steel: { co2_2k: 66, co2_5k: 5, water_6l: 86, water_9l: 5, foam_6l: 23, powder_2k: 346, powder_6k: 11, powder_9k: 1, wetchem_6l: 1 },
-    p50:   { p50_foam_6l_eco: 128, p50_wetchem_6l: 1 },
+    p50:   { p50_foam_2l: 79, p50_foam_6l_eco: 128, p50_wetchem_6l: 1 },
   },
   'Other': {
     steel: {},
