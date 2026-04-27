@@ -350,6 +350,8 @@ export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('leads')
   const [confirmReset, setConfirmReset] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -368,6 +370,18 @@ export default function AdminPage() {
     } else {
       setAuthError('Incorrect password')
     }
+  }
+
+  async function handleDeleteEntry(id: string) {
+    setDeletingId(id)
+    await fetch(`/api/delete-entry?token=${exportToken}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    setDeletingId(null)
+    setConfirmDeleteId(null)
+    setEntries(prev => prev.filter(e => e.id !== id))
   }
 
   async function handleReset() {
@@ -547,6 +561,7 @@ export default function AdminPage() {
                         <Mail size={13} />
                       </th>
                       <th className="w-8" />
+                      <th className="w-8" />
                     </tr>
                   </thead>
                   <tbody>
@@ -578,10 +593,38 @@ export default function AdminPage() {
                             <td className="px-3 py-3 text-gray-300">
                               {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </td>
+                            <td className="px-2 py-3" onClick={e => e.stopPropagation()}>
+                              {confirmDeleteId === entry.id ? (
+                                <div className="flex items-center gap-1 whitespace-nowrap">
+                                  <button
+                                    onClick={() => handleDeleteEntry(entry.id)}
+                                    disabled={deletingId === entry.id}
+                                    className="font-body text-xs text-brand-red hover:underline disabled:opacity-50"
+                                  >
+                                    {deletingId === entry.id ? '…' : 'Delete'}
+                                  </button>
+                                  <span className="text-gray-300">·</span>
+                                  <button
+                                    onClick={() => setConfirmDeleteId(null)}
+                                    className="font-body text-xs text-gray-400 hover:underline"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setConfirmDeleteId(entry.id)}
+                                  className="text-gray-200 hover:text-brand-red transition-colors"
+                                  title="Delete entry"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
+                            </td>
                           </tr>
                           {isExpanded && (
                             <tr key={`${entry.id}-detail`} className="bg-gray-50 border-b border-gray-100">
-                              <td colSpan={6}>
+                              <td colSpan={7}>
                                 <EntryDetail entry={entry} />
                               </td>
                             </tr>
