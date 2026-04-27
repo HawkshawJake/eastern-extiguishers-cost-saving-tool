@@ -71,12 +71,12 @@ export const P50_TYPES: P50Type[] = [
 ]
 
 export const STEEL_TO_P50_MAP: Record<string, string | null> = {
-  co2_2k:        null,
-  co2_2k_nonmag: null,
-  co2_5k:        null,
-  water_3l:      null,
-  water_6l:      null,
-  water_9l:      null,
+  co2_2k:        'p50_foam_6l_eco',
+  co2_2k_nonmag: 'p50_foam_6l_eco',
+  co2_5k:        'p50_foam_6l_eco',
+  water_3l:      'p50_foam_6l_eco',
+  water_6l:      'p50_foam_6l_eco',
+  water_9l:      'p50_foam_6l_eco',
   watermist_3l:  null,
   watermist_6l:  'p50_watermist_6l',
   watermist_9l:  null,
