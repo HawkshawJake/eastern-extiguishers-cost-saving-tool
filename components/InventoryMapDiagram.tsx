@@ -14,20 +14,23 @@ export default function InventoryMapDiagram({ steelInventory, p50Inventory, stee
   const p50TypeMap = new Map(p50Types.map(t => [t.id, t]))
   const steelTypeMap = new Map(steelTypes.map(t => [t.id, t]))
 
-  // Group steel ids (with qty > 0 and a P50 equivalent) by their target P50 id
+  // Group steel ids (with qty > 0) by their target P50 id — only when the P50 also has qty > 0
   const p50Groups = new Map<string, string[]>()
   for (const t of steelTypes) {
     const qty = steelInventory[t.id] ?? 0
     const p50Id = STEEL_TO_P50_MAP[t.id]
-    if (qty > 0 && p50Id) {
+    if (qty > 0 && p50Id && (p50Inventory[p50Id] ?? 0) > 0) {
       if (!p50Groups.has(p50Id)) p50Groups.set(p50Id, [])
       p50Groups.get(p50Id)!.push(t.id)
     }
   }
 
+  // Steel types with no P50 equivalent, OR where the P50 qty hasn't been entered yet
   const unmapped = steelTypes.filter(t => {
     const qty = steelInventory[t.id] ?? 0
-    return qty > 0 && !STEEL_TO_P50_MAP[t.id]
+    if (qty === 0) return false
+    const p50Id = STEEL_TO_P50_MAP[t.id]
+    return !p50Id || (p50Inventory[p50Id] ?? 0) === 0
   })
 
   const hasContent = p50Groups.size > 0 || unmapped.length > 0
@@ -91,7 +94,7 @@ export default function InventoryMapDiagram({ steelInventory, p50Inventory, stee
       {unmapped.length > 0 && (
         <div className="pt-2 border-t border-gray-100">
           <p className="font-body text-xs text-gray-400 uppercase tracking-wide mb-2">
-            No P50 Equivalent
+            Remaining Steel (No P50 Planned)
           </p>
           <div className="space-y-1">
             {unmapped.map(t => (
