@@ -16,6 +16,12 @@ export function defaultSiteConfig(): SiteConfig {
   }
 }
 
+function mergeTypes<T extends { id: string }>(defaults: T[], stored: T[] | undefined): T[] {
+  if (!stored) return defaults
+  const storedMap = new Map(stored.map(t => [t.id, t]))
+  return defaults.map(t => storedMap.has(t.id) ? { ...t, ...storedMap.get(t.id)! } : t)
+}
+
 export async function loadConfig(): Promise<SiteConfig> {
   try {
     const { data } = await supabase.from('config').select('data').single()
@@ -24,8 +30,8 @@ export async function loadConfig(): Promise<SiteConfig> {
     const defaults = defaultSiteConfig()
     return {
       constants: { ...defaults.constants, ...(stored.constants ?? {}) },
-      steelTypes: stored.steelTypes ?? defaults.steelTypes,
-      p50Types: stored.p50Types ?? defaults.p50Types,
+      steelTypes: mergeTypes(defaults.steelTypes, stored.steelTypes),
+      p50Types: mergeTypes(defaults.p50Types, stored.p50Types),
     }
   } catch {
     return defaultSiteConfig()
