@@ -335,7 +335,13 @@ export default function ResultsPage() {
           <button className="btn-secondary flex-1" onClick={() => router.push('/calculator')}>
             ← Recalculate
           </button>
-          <button className="btn-primary flex-1" onClick={() => router.push('/')}>
+          <button
+            className="btn-primary flex-1"
+            onClick={() => setShowModal(true)}
+          >
+            Get My Report
+          </button>
+          <button className="btn-secondary flex-1" onClick={() => router.push('/')}>
             Start Over
           </button>
         </div>

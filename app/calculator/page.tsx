@@ -89,10 +89,7 @@ function P50Row({
 }) {
   return (
     <div className="flex items-center justify-between py-2 gap-4">
-      <div className="flex-1">
-        <p className="font-body text-sm text-gray-700 leading-tight">{type.label}</p>
-        <p className="font-body text-xs text-gray-400">£{type.clientCost.toFixed(2)} / unit</p>
-      </div>
+      <span className="font-body text-sm text-gray-700 flex-1 leading-tight">{type.label}</span>
       <input
         type="number"
         min="0"
