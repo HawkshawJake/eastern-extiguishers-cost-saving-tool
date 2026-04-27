@@ -296,18 +296,23 @@ export default function ResultsPage() {
         <div className="bg-white rounded-md border border-gray-200 shadow-sm px-6 py-2 mb-5">
           <MetricRow
             label="Current Steel Extinguishers"
-            value={formatCurrency(totals.totalSteelCost)}
-            sub={`${totals.totalSteelUnits} units · service, exchange & disposal over ${years} yrs`}
+            value={`${totals.totalSteelUnits} units`}
+            sub="Annual engineer service required"
           />
           <MetricRow
             label="P50 Composite Extinguishers"
-            value={formatCurrency(totals.totalP50Cost)}
-            sub={`${totals.totalP50Units} units · one-off composite cost, no annual service`}
+            value={`${totals.totalP50Units} units`}
+            sub="No annual service contract needed"
+          />
+          <MetricRow
+            label="Annual Saving"
+            value={formatCurrency(totals.annualSaving)}
+            sub="Average per year vs current steel costs"
           />
           <MetricRow
             label={`Your ${years}-Year Saving`}
             value={formatCurrency(totals.saving)}
-            sub={`${formatPercent(totals.percentSaving)} saving · ${formatCurrency(totals.annualSaving)} / year`}
+            sub={`${formatPercent(totals.percentSaving)} reduction on your current costs`}
             highlight
           />
         </div>
