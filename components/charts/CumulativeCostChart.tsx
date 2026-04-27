@@ -38,13 +38,14 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 interface Props {
   data: CostPoint[]
   breakEvenYear: number | null
+  height?: number | string
 }
 
-export default function CumulativeCostChart({ data, breakEvenYear }: Props) {
+export default function CumulativeCostChart({ data, breakEvenYear, height = 300 }: Props) {
   const breakEvenX = breakEvenYear !== null ? Math.ceil(breakEvenYear) : undefined
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
+    <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 8, right: 20, left: 10, bottom: 8 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#E4E4E4" />
         <XAxis

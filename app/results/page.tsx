@@ -3,14 +3,13 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { TrendingDown, Leaf, Calculator, Calendar, Info } from 'lucide-react'
+import { TrendingDown, Leaf, Calendar, Info, Calculator } from 'lucide-react'
 import Header from '@/components/Header'
 import { useInventory } from '@/context/InventoryContext'
 import { useConfig } from '@/context/ConfigContext'
 import {
   calcTotals,
   calcCumulativeCosts,
-  calcCategoryBreakdown,
   findBreakEvenYear,
   formatCurrency,
   formatPercent,
@@ -18,45 +17,10 @@ import {
 import { addEntry, updateEntryContact } from '@/lib/eventStore'
 import LeadCaptureModal from '@/components/LeadCaptureModal'
 
-// SSR-safe dynamic imports for recharts components
 const CumulativeCostChart = dynamic(
   () => import('@/components/charts/CumulativeCostChart'),
-  { ssr: false, loading: () => <div className="h-[300px] flex items-center justify-center text-gray-400 text-sm">Loading chart…</div> },
+  { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">Loading chart…</div> },
 )
-const CategoryChart = dynamic(
-  () => import('@/components/charts/CategoryChart'),
-  { ssr: false, loading: () => <div className="h-[240px] flex items-center justify-center text-gray-400 text-sm">Loading chart…</div> },
-)
-
-function MetricRow({
-  label,
-  value,
-  sub,
-  highlight,
-}: {
-  label: string
-  value: string
-  sub?: string
-  highlight?: boolean
-}) {
-  return (
-    <div
-      className={`flex items-center justify-between py-4 border-b border-gray-100 last:border-0 ${
-        highlight ? 'bg-brand-red/5 -mx-6 px-6' : ''
-      }`}
-    >
-      <div>
-        <p className={`font-body text-sm ${highlight ? 'font-semibold text-brand-black' : 'text-gray-500'}`}>
-          {label}
-        </p>
-        {sub && <p className="font-body text-xs text-gray-400 mt-0.5">{sub}</p>}
-      </div>
-      <p className={`font-heading font-bold text-xl tabular-nums ${highlight ? 'text-brand-red' : 'text-brand-black'}`}>
-        {value}
-      </p>
-    </div>
-  )
-}
 
 export default function ResultsPage() {
   const router = useRouter()
@@ -67,18 +31,14 @@ export default function ResultsPage() {
   const entryIdRef = useRef('')
   const [showModal, setShowModal] = useState(false)
 
-  // Always compute at standard 8 years for the leaderboard entry
   const defaultTotals = useMemo(
     () => calcTotals(steelInventory, p50Inventory, steelTypes, p50Types, 8, constants),
     [steelInventory, p50Inventory, steelTypes, p50Types, constants],
   )
 
-  // Save this visitor's results once per navigation to this page
   useEffect(() => {
-    // Restore entry ID if this session already saved (e.g. page refresh)
     const storedId = sessionStorage.getItem('ee_entry_id')
     if (storedId) entryIdRef.current = storedId
-
     if (savedRef.current) return
     if (defaultTotals.saving <= 0) return
     savedRef.current = true
@@ -96,10 +56,9 @@ export default function ResultsPage() {
         entryIdRef.current = id
         sessionStorage.setItem('ee_entry_id', id)
       }
-    }).catch(() => { /* non-critical */ })
+    }).catch(() => {})
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Show lead capture modal after a short delay
   useEffect(() => {
     if (defaultTotals.saving <= 0) return
     if (sessionStorage.getItem('ee_lead_done')) return
@@ -108,9 +67,7 @@ export default function ResultsPage() {
   }, [defaultTotals.saving])
 
   async function handleLeadSubmit(data: { company: string; email: string; phone: string }) {
-    if (entryIdRef.current) {
-      await updateEntryContact(entryIdRef.current, data)
-    }
+    if (entryIdRef.current) await updateEntryContact(entryIdRef.current, data)
     sessionStorage.setItem('ee_lead_done', '1')
   }
 
@@ -134,36 +91,24 @@ export default function ResultsPage() {
     [steelInventory, p50Inventory, steelTypes, p50Types, constants],
   )
 
-  const categoryData = useMemo(
-    () => calcCategoryBreakdown(steelInventory, p50Inventory, steelTypes, p50Types, years, constants),
-    [steelInventory, p50Inventory, steelTypes, p50Types, years, constants],
-  )
-
   const hasData = totals.totalSteelUnits > 0 || totals.totalP50Units > 0
 
   if (!hasData) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header step={3} />
-        <main className="flex-1 flex flex-col items-center justify-center px-5 py-12">
+        <main className="flex-1 flex flex-col items-center justify-center px-5">
           <Calculator className="text-gray-300 mb-4" size={48} />
-          <h2 className="font-heading font-bold text-2xl uppercase text-brand-black mb-2">
-            No Inventory Entered
-          </h2>
-          <p className="font-body text-gray-500 text-center mb-8">
-            Go back and enter your extinguisher quantities to see your savings.
-          </p>
-          <button className="btn-primary" onClick={() => router.push('/calculator')}>
-            ← Enter Inventory
-          </button>
+          <h2 className="font-heading font-bold text-2xl uppercase text-brand-black mb-2">No Inventory Entered</h2>
+          <p className="font-body text-gray-500 text-center mb-8">Go back and enter your extinguisher quantities to see your savings.</p>
+          <button className="btn-primary" onClick={() => router.push('/calculator')}>← Enter Inventory</button>
         </main>
       </div>
     )
   }
 
   const contextLabel = [company, industry].filter(Boolean).join(' · ')
-  const breakEvenCalendarYear =
-    breakEvenYear !== null ? new Date().getFullYear() + Math.ceil(breakEvenYear) : null
+  const breakEvenCalendarYear = breakEvenYear !== null ? new Date().getFullYear() + Math.ceil(breakEvenYear) : null
   const breakEvenWithinRange = breakEvenYear !== null && breakEvenYear <= years
 
   return (
@@ -179,187 +124,144 @@ export default function ResultsPage() {
         />
       )}
 
-      <main className="flex-1 max-w-2xl mx-auto w-full px-5 py-8 md:py-12">
+      <main className="flex-1 flex flex-col px-5 py-4 max-w-7xl mx-auto w-full">
         {contextLabel && (
-          <p className="font-body text-sm text-gray-400 uppercase tracking-widest mb-4 text-center">
+          <p className="font-body text-sm text-gray-400 uppercase tracking-widest mb-3 text-center">
             {contextLabel}
           </p>
         )}
 
-        {/* Hero saving card */}
-        <div className="rounded-xl text-center mb-5 shadow-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #B8241C 0%, #6B1210 100%)' }}>
-          <div className="px-8 md:px-14 py-10 md:py-14">
-            <p className="font-body text-white/60 uppercase tracking-widest text-xs mb-5">
-              You Could Save
-            </p>
-            <p className="font-heading font-black text-6xl md:text-8xl text-white leading-none tabular-nums">
-              {formatCurrency(totals.saving)}
-            </p>
-            <p className="font-body text-white/70 mt-5 text-xl">over {years} years</p>
-            {totals.percentSaving > 0 && (
-              <p className="font-body text-white/50 text-sm mt-2">
-                {formatPercent(totals.percentSaving)} reduction on your current costs
-              </p>
-            )}
-          </div>
-          <div className="bg-black/20 px-8 py-3 flex items-center justify-center gap-2">
-            <TrendingDown className="text-white/60" size={14} strokeWidth={2} />
-            <p className="font-body text-white/60 text-xs uppercase tracking-widest">
-              P50 Composite vs Traditional Steel
-            </p>
-          </div>
-        </div>
+        {/* Dashboard grid */}
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
 
-        {/* Year slider */}
-        <div className="bg-white rounded-md border border-gray-200 shadow-sm p-5 mb-5">
-          <div className="flex items-center justify-between mb-3">
-            <label className="font-body text-sm text-gray-600">
-              Comparison period:{' '}
-              <span className="font-semibold text-brand-black">{years} years</span>
-            </label>
-            <span className="font-body text-xs text-gray-400">Drag to adjust</span>
-          </div>
-          <input
-            type="range"
-            min="1"
-            max="20"
-            value={years}
-            onChange={e => setYears(Number(e.target.value))}
-            className="w-full accent-brand-red cursor-pointer"
-          />
-          <div className="flex justify-between font-body text-xs text-gray-400 mt-1">
-            <span>1 year</span>
-            <span>20 years</span>
-          </div>
-        </div>
+          {/* Left: hero + stats */}
+          <div className="lg:col-span-2 flex flex-col gap-4">
 
-        {/* Break-even callout */}
-        {breakEvenYear !== null ? (
-          <div
-            className={`rounded-md p-4 mb-5 flex items-start gap-3 ${
-              breakEvenWithinRange
-                ? 'bg-eco-light border border-eco-green/30'
-                : 'bg-blue-50 border border-blue-200'
-            }`}
-          >
-            <Calendar
-              className={breakEvenWithinRange ? 'text-eco-green' : 'text-blue-400'}
-              size={20}
-            />
-            <div>
-              <p
-                className={`font-heading font-bold uppercase text-sm tracking-wide ${
-                  breakEvenWithinRange ? 'text-eco-green' : 'text-blue-600'
-                }`}
-              >
-                Break-even point
-              </p>
-              <p className="font-body font-semibold text-brand-black">
-                Year {Math.ceil(breakEvenYear)}{' '}
-                {breakEvenCalendarYear && (
-                  <span className="font-normal text-gray-500">
-                    · approximately {breakEvenCalendarYear}
-                  </span>
+            {/* Hero */}
+            <div className="rounded-xl shadow-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #B8241C 0%, #6B1210 100%)' }}>
+              <div className="px-6 py-8 text-center">
+                <p className="font-body text-white/60 uppercase tracking-widest text-xs mb-3">
+                  You Could Save
+                </p>
+                <p className="font-heading font-black text-5xl lg:text-6xl xl:text-7xl text-white leading-none tabular-nums">
+                  {formatCurrency(totals.saving)}
+                </p>
+                <p className="font-body text-white/70 mt-3 text-base">over {years} years</p>
+                {totals.percentSaving > 0 && (
+                  <p className="font-body text-white/50 text-sm mt-1">
+                    {formatPercent(totals.percentSaving)} reduction on current costs
+                  </p>
                 )}
-              </p>
-              <p className="font-body text-xs text-gray-500 mt-0.5">
-                P50 units pay for themselves after {Math.ceil(breakEvenYear)}{' '}
-                {Math.ceil(breakEvenYear) === 1 ? 'year' : 'years'}
-                {!breakEvenWithinRange && ' — extend the period to see this on the chart'}
-              </p>
+              </div>
+              <div className="bg-black/20 px-6 py-2 flex items-center justify-center gap-2">
+                <TrendingDown className="text-white/60" size={12} />
+                <p className="font-body text-white/60 text-xs uppercase tracking-widest">
+                  P50 Composite vs Traditional Steel
+                </p>
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex-1 px-5 flex flex-col justify-center divide-y divide-gray-100">
+              <div className="flex items-center justify-between py-3">
+                <div>
+                  <p className="font-body text-sm text-gray-500">Steel Extinguishers</p>
+                  <p className="font-body text-xs text-gray-400 mt-0.5">Annual engineer service required</p>
+                </div>
+                <p className="font-heading font-bold text-lg text-brand-black tabular-nums">{totals.totalSteelUnits} units</p>
+              </div>
+              <div className="flex items-center justify-between py-3">
+                <div>
+                  <p className="font-body text-sm text-gray-500">P50 Composite</p>
+                  <p className="font-body text-xs text-gray-400 mt-0.5">No annual service contract</p>
+                </div>
+                <p className="font-heading font-bold text-lg text-brand-black tabular-nums">{totals.totalP50Units} units</p>
+              </div>
+              <div className="flex items-center justify-between py-3">
+                <div>
+                  <p className="font-body text-sm text-gray-500">Annual Saving</p>
+                  <p className="font-body text-xs text-gray-400 mt-0.5">Average saving per year</p>
+                </div>
+                <p className="font-heading font-bold text-lg text-brand-black tabular-nums">{formatCurrency(totals.annualSaving)}</p>
+              </div>
+              <div className="flex items-center justify-between py-3 bg-brand-red/5 -mx-5 px-5">
+                <p className="font-body text-sm font-semibold text-brand-black">{years}-Year Saving</p>
+                <p className="font-heading font-bold text-xl text-brand-red tabular-nums">{formatCurrency(totals.saving)}</p>
+              </div>
             </div>
           </div>
-        ) : (
-          <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-5 flex items-start gap-3">
-            <Info className="text-amber-500 flex-shrink-0" size={20} />
-            <p className="font-body text-sm text-amber-700">
-              P50 does not pay back within 20 years for this inventory mix. Check your P50
-              quantities are set correctly.
-            </p>
-          </div>
-        )}
 
-        {/* Cumulative cost chart */}
-        <div className="bg-white rounded-md border border-gray-200 shadow-sm p-5 mb-5">
-          <h3 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black mb-4">
-            Cumulative Cost Over {years} Years
-          </h3>
-          <CumulativeCostChart data={cumulativePoints} breakEvenYear={breakEvenYear} />
-        </div>
+          {/* Right: chart + info cards */}
+          <div className="lg:col-span-3 flex flex-col gap-4">
 
-        {/* Category breakdown chart */}
-        {categoryData.length > 0 && (
-          <div className="bg-white rounded-md border border-gray-200 shadow-sm p-5 mb-5">
-            <h3 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black mb-4">
-              Cost Breakdown by Category
-            </h3>
-            <CategoryChart data={categoryData} />
-          </div>
-        )}
+            {/* Chart */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex-1 flex flex-col">
+              <h3 className="font-heading font-bold text-sm uppercase tracking-wide text-brand-black mb-3">
+                Cumulative Cost Over {years} Years
+              </h3>
+              <div className="flex-1" style={{ minHeight: 200 }}>
+                <CumulativeCostChart data={cumulativePoints} breakEvenYear={breakEvenYear} height="100%" />
+              </div>
+            </div>
 
-        {/* Stats table */}
-        <div className="bg-white rounded-md border border-gray-200 shadow-sm px-6 py-2 mb-5">
-          <MetricRow
-            label="Current Steel Extinguishers"
-            value={`${totals.totalSteelUnits} units`}
-            sub="Annual engineer service required"
-          />
-          <MetricRow
-            label="P50 Composite Extinguishers"
-            value={`${totals.totalP50Units} units`}
-            sub="No annual service contract needed"
-          />
-          <MetricRow
-            label="Annual Saving"
-            value={formatCurrency(totals.annualSaving)}
-            sub="Average per year vs current steel costs"
-          />
-          <MetricRow
-            label={`Your ${years}-Year Saving`}
-            value={formatCurrency(totals.saving)}
-            sub={`${formatPercent(totals.percentSaving)} reduction on your current costs`}
-            highlight
-          />
-        </div>
+            {/* Break-even + CO2 */}
+            <div className="grid grid-cols-2 gap-4">
+              {breakEvenYear !== null ? (
+                <div className={`rounded-xl p-4 flex items-center gap-3 ${breakEvenWithinRange ? 'bg-eco-light border border-eco-green/30' : 'bg-blue-50 border border-blue-200'}`}>
+                  <Calendar className={`flex-shrink-0 ${breakEvenWithinRange ? 'text-eco-green' : 'text-blue-400'}`} size={22} />
+                  <div>
+                    <p className={`font-heading font-bold uppercase text-xs tracking-wide ${breakEvenWithinRange ? 'text-eco-green' : 'text-blue-600'}`}>Break-even</p>
+                    <p className="font-heading font-bold text-2xl text-brand-black leading-none mt-0.5">Year {Math.ceil(breakEvenYear)}</p>
+                    {breakEvenCalendarYear && (
+                      <p className="font-body text-xs text-gray-500 mt-0.5">approximately {breakEvenCalendarYear}</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
+                  <Info className="text-amber-500 flex-shrink-0" size={22} />
+                  <p className="font-body text-xs text-amber-700">P50 does not pay back within 20 years for this mix.</p>
+                </div>
+              )}
 
-        {/* CO2 badge */}
-        {totals.co2Saving > 0 && (
-          <div className="bg-eco-light border border-eco-green/30 rounded-md p-5 flex items-start gap-4 mb-8">
-            <Leaf className="text-eco-green flex-shrink-0 mt-0.5" size={24} strokeWidth={2} />
-            <div>
-              <p className="font-heading font-bold uppercase text-eco-green text-sm tracking-wide">
-                CO2 Reduction
-              </p>
-              <p className="font-body text-2xl font-semibold text-brand-black mt-1">
-                {totals.co2Saving.toFixed(1)} kg CO2e saved
-              </p>
-              <p className="font-body text-sm text-gray-500 mt-0.5">
-                {formatPercent(totals.co2PercentReduction)} reduction vs steel extinguishers
-              </p>
+              {totals.co2Saving > 0 && (
+                <div className="bg-eco-light border border-eco-green/30 rounded-xl p-4 flex items-center gap-3">
+                  <Leaf className="text-eco-green flex-shrink-0" size={22} />
+                  <div>
+                    <p className="font-heading font-bold uppercase text-xs tracking-wide text-eco-green">CO₂ Reduction</p>
+                    <p className="font-heading font-bold text-2xl text-brand-black leading-none mt-0.5">{totals.co2Saving.toFixed(1)} kg</p>
+                    <p className="font-body text-xs text-gray-500 mt-0.5">{formatPercent(totals.co2PercentReduction)} less vs steel</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )}
-
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button className="btn-secondary flex-1" onClick={() => router.push('/calculator')}>
-            ← Recalculate
-          </button>
-          <button
-            className="btn-primary flex-1"
-            onClick={() => setShowModal(true)}
-          >
-            Get My Report
-          </button>
-          <button className="btn-secondary flex-1" onClick={() => router.push('/')}>
-            Start Over
-          </button>
         </div>
 
-        <p className="text-center text-xs text-gray-400 font-body mt-6">
-          Figures are estimates based on typical service, exchange, and disposal charges. Speak to
-          an Eastern Extinguishers advisor for a tailored quote.
-        </p>
+        {/* Year slider + CTAs */}
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
+          <div className="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-3 w-full">
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="font-body text-sm text-gray-600">
+                Period: <span className="font-semibold text-brand-black">{years} years</span>
+              </label>
+              <span className="font-body text-xs text-gray-400">Drag to adjust</span>
+            </div>
+            <input
+              type="range" min="1" max="20" value={years}
+              onChange={e => setYears(Number(e.target.value))}
+              className="w-full accent-brand-red cursor-pointer"
+            />
+            <div className="flex justify-between font-body text-xs text-gray-400 mt-0.5">
+              <span>1 year</span><span>20 years</span>
+            </div>
+          </div>
+          <div className="flex gap-3 flex-shrink-0">
+            <button className="btn-secondary" onClick={() => router.push('/calculator')}>← Recalculate</button>
+            <button className="btn-primary" onClick={() => setShowModal(true)}>Get My Report</button>
+            <button className="btn-secondary" onClick={() => router.push('/')}>Start Over</button>
+          </div>
+        </div>
       </main>
     </div>
   )
