@@ -211,7 +211,7 @@ export default function CalculatorPage() {
             </div>
             <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
               <p className="font-body text-xs text-gray-400">
-                No CO2 or water P50 equivalents — speak to our team for options.
+                ECO Foam covers CO2 &amp; foam use cases. Water Mist replaces water units. One P50 often replaces two traditional extinguishers.
               </p>
             </div>
           </div>
