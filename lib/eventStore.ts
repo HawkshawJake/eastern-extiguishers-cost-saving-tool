@@ -31,17 +31,13 @@ export async function updateEntryContact(
   id: string,
   contact: { email: string; phone?: string; company?: string },
 ): Promise<void> {
-  const { data, error } = await supabase
-    .from('event_entries')
-    .update({
-      email: contact.email,
-      phone: contact.phone || null,
-      ...(contact.company ? { company: contact.company } : {}),
-    })
-    .eq('id', id)
-    .select('id')
-  if (error) throw new Error(error.message)
-  if (!data || data.length === 0) throw new Error('Entry not found — contact details could not be saved.')
+  const res = await fetch('/api/save-contact', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, ...contact }),
+  })
+  const json = await res.json()
+  if (!json.ok) throw new Error(json.error ?? 'Failed to save contact details')
 }
 
 export async function getLeaderboard(limit = 10): Promise<EventEntry[]> {
