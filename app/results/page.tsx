@@ -110,6 +110,21 @@ export default function ResultsPage() {
   async function handleLeadSubmit(data: { company: string; email: string; phone: string }) {
     if (entryIdRef.current) {
       await updateEntryContact(entryIdRef.current, data)
+    } else {
+      // Race condition: addEntry hadn't resolved yet — create a complete entry now
+      const id = await addEntry({
+        company: data.company || company || 'Anonymous',
+        industry: industry || 'Other',
+        saving: defaultTotals.saving,
+        steel_inventory: steelInventory,
+        p50_inventory: p50Inventory,
+        email: data.email,
+        phone: data.phone,
+      })
+      if (id) {
+        entryIdRef.current = id
+        sessionStorage.setItem('ee_entry_id', id)
+      }
     }
     sessionStorage.setItem('ee_lead_done', '1')
   }

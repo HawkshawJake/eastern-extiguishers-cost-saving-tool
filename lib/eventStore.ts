@@ -17,7 +17,7 @@ function todayPrefix(): string {
 }
 
 export async function addEntry(
-  entry: Pick<EventEntry, 'company' | 'industry' | 'saving' | 'steel_inventory' | 'p50_inventory'>,
+  entry: Pick<EventEntry, 'company' | 'industry' | 'saving' | 'steel_inventory' | 'p50_inventory'> & { email?: string; phone?: string },
 ): Promise<string> {
   const { data } = await supabase
     .from('event_entries')
@@ -31,7 +31,7 @@ export async function updateEntryContact(
   id: string,
   contact: { email: string; phone?: string; company?: string },
 ): Promise<void> {
-  await supabase
+  const { error } = await supabase
     .from('event_entries')
     .update({
       email: contact.email,
@@ -39,6 +39,7 @@ export async function updateEntryContact(
       ...(contact.company ? { company: contact.company } : {}),
     })
     .eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
 export async function getLeaderboard(limit = 10): Promise<EventEntry[]> {
