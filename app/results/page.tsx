@@ -10,22 +10,18 @@ import { useConfig } from '@/context/ConfigContext'
 import {
   calcTotals,
   calcCumulativeCosts,
-  calcCategoryBreakdown,
   findBreakEvenYear,
   formatCurrency,
   formatPercent,
 } from '@/lib/calculations'
 import { addEntry, updateEntryContact } from '@/lib/eventStore'
 import LeadCaptureModal from '@/components/LeadCaptureModal'
+import InventoryMapDiagram from '@/components/InventoryMapDiagram'
 
 // SSR-safe dynamic imports for recharts components
 const CumulativeCostChart = dynamic(
   () => import('@/components/charts/CumulativeCostChart'),
   { ssr: false, loading: () => <div className="h-[300px] flex items-center justify-center text-gray-400 text-sm">Loading chart…</div> },
-)
-const CategoryChart = dynamic(
-  () => import('@/components/charts/CategoryChart'),
-  { ssr: false, loading: () => <div className="h-[240px] flex items-center justify-center text-gray-400 text-sm">Loading chart…</div> },
 )
 
 function MetricRow({
@@ -147,11 +143,6 @@ export default function ResultsPage() {
   const breakEvenYear = useMemo(
     () => findBreakEvenYear(calcCumulativeCosts(steelInventory, p50Inventory, steelTypes, p50Types, 30, constants)),
     [steelInventory, p50Inventory, steelTypes, p50Types, constants],
-  )
-
-  const categoryData = useMemo(
-    () => calcCategoryBreakdown(steelInventory, p50Inventory, steelTypes, p50Types, years, constants),
-    [steelInventory, p50Inventory, steelTypes, p50Types, years, constants],
   )
 
   const hasData = totals.totalSteelUnits > 0 || totals.totalP50Units > 0
@@ -297,15 +288,57 @@ export default function ResultsPage() {
           <CumulativeCostChart data={cumulativePoints} breakEvenYear={breakEvenYear} />
         </div>
 
-        {/* Category breakdown chart */}
-        {categoryData.length > 0 && (
-          <div className="bg-white rounded-md border border-gray-200 shadow-sm p-5 mb-5">
-            <h3 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black mb-4">
-              Cost Breakdown by Category
-            </h3>
-            <CategoryChart data={categoryData} />
+        {/* Steel → P50 mapping diagram */}
+        <div className="bg-white rounded-md border border-gray-200 shadow-sm p-5 mb-5">
+          <h3 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black mb-4">
+            Your Steel → P50 Conversion
+          </h3>
+          <InventoryMapDiagram
+            steelInventory={steelInventory}
+            p50Inventory={p50Inventory}
+            steelTypes={steelTypes}
+            p50Types={p50Types}
+          />
+        </div>
+
+        {/* Cost & unit summary */}
+        <div className="bg-white rounded-md border border-gray-200 shadow-sm p-5 mb-5">
+          <h3 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black mb-4">
+            Cost & Unit Summary
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gray-50 rounded-md p-4 text-center">
+              <p className="font-body text-xs text-gray-400 uppercase tracking-wide mb-1">Total Steel Cost</p>
+              <p className="font-heading font-bold text-xl text-brand-black tabular-nums">
+                {formatCurrency(totals.totalSteelCost)}
+              </p>
+              <p className="font-body text-xs text-gray-400 mt-0.5">{totals.totalSteelUnits.toLocaleString()} units</p>
+            </div>
+            <div className="bg-brand-red/5 border border-brand-red/20 rounded-md p-4 text-center">
+              <p className="font-body text-xs text-gray-400 uppercase tracking-wide mb-1">Total P50 Cost</p>
+              <p className="font-heading font-bold text-xl text-brand-red tabular-nums">
+                {formatCurrency(totals.totalP50Cost)}
+              </p>
+              <p className="font-body text-xs text-gray-400 mt-0.5">{totals.totalP50Units.toLocaleString()} units</p>
+            </div>
+            <div className="bg-gray-50 rounded-md p-4 text-center">
+              <p className="font-body text-xs text-gray-400 uppercase tracking-wide mb-1">Cost Reduction</p>
+              <p className="font-heading font-bold text-xl text-eco-green tabular-nums">
+                {formatPercent(totals.percentSaving)}
+              </p>
+              <p className="font-body text-xs text-gray-400 mt-0.5">vs current steel costs</p>
+            </div>
+            <div className="bg-gray-50 rounded-md p-4 text-center">
+              <p className="font-body text-xs text-gray-400 uppercase tracking-wide mb-1">Unit Reduction</p>
+              <p className="font-heading font-bold text-xl text-eco-green tabular-nums">
+                {totals.totalSteelUnits > 0
+                  ? formatPercent((totals.totalSteelUnits - totals.totalP50Units) / totals.totalSteelUnits)
+                  : '—'}
+              </p>
+              <p className="font-body text-xs text-gray-400 mt-0.5">fewer units to manage</p>
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Stats table */}
         <div className="bg-white rounded-md border border-gray-200 shadow-sm px-6 py-2 mb-5">
