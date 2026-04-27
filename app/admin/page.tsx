@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Download, Lock, ChevronDown, ChevronUp, Leaf, Settings, Users, RotateCcw, Save, Mail, RefreshCw } from 'lucide-react'
+import { Download, Lock, ChevronDown, ChevronUp, Leaf, Settings, Users, RotateCcw, Save, Mail, RefreshCw, Trash2 } from 'lucide-react'
 import Header from '@/components/Header'
-import { getAllEntries, type EventEntry } from '@/lib/eventStore'
+import { getAllEntries, resetEntries, type EventEntry } from '@/lib/eventStore'
 import { STEEL_TYPES, P50_TYPES } from '@/data/extinguishers'
 import { useConfig } from '@/context/ConfigContext'
 import { defaultSiteConfig, type SiteConfig } from '@/lib/siteConfig'
@@ -348,6 +348,8 @@ export default function AdminPage() {
   const [loadingEntries, setLoadingEntries] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('leads')
+  const [confirmReset, setConfirmReset] = useState(false)
+  const [resetting, setResetting] = useState(false)
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -366,6 +368,15 @@ export default function AdminPage() {
     } else {
       setAuthError('Incorrect password')
     }
+  }
+
+  async function handleReset() {
+    if (!confirmReset) { setConfirmReset(true); return }
+    setResetting(true)
+    await resetEntries(exportToken)
+    setConfirmReset(false)
+    setResetting(false)
+    loadEntries()
   }
 
   function loadEntries() {
@@ -489,6 +500,32 @@ export default function AdminPage() {
                     <Download size={16} />
                     Export CSV
                   </a>
+                )}
+                {confirmReset ? (
+                  <div className="flex items-center gap-2">
+                    <span className="font-body text-sm text-gray-500">Reset today's data?</span>
+                    <button
+                      onClick={handleReset}
+                      disabled={resetting}
+                      className="font-body text-sm text-brand-red hover:underline disabled:opacity-50"
+                    >
+                      {resetting ? 'Resetting…' : 'Yes, reset'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmReset(false)}
+                      className="font-body text-sm text-gray-400 hover:underline"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleReset}
+                    className="btn-secondary flex items-center gap-2 text-gray-400 hover:text-brand-red"
+                  >
+                    <Trash2 size={14} />
+                    Reset Day
+                  </button>
                 )}
               </div>
             </div>
