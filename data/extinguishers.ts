@@ -55,7 +55,6 @@ export const STEEL_TYPES: SteelType[] = [
 ]
 
 export const P50_TYPES: P50Type[] = [
-  { id: 'p50_foam_2l',      label: '2L Foam Composite',                    clientCost: 65.38,  lifeSpan: 10, category: 'Foam' },
   { id: 'p50_foam_6l_eco',  label: '6L ECO Foam Composite (Red Casing)',   clientCost: 141.50, lifeSpan: 10, category: 'Foam' },
   { id: 'p50_foam_9l',      label: '9L ECO Foam Composite (Red Casing)',   clientCost: 170.37, lifeSpan: 10, category: 'Foam' },
   { id: 'p50_foam_6l_blk',  label: '6L SFF (A-Foam) Composite',           clientCost: 126.33, lifeSpan: 10, category: 'Foam' },
@@ -83,7 +82,7 @@ export const STEEL_TO_P50_MAP: Record<string, string | null> = {
   watermist_6l:  'p50_watermist_6l',
   watermist_9l:  null,
   foam_1l:       null,
-  foam_2l:       'p50_foam_2l',
+  foam_2l:       null,
   foam_3l:       null,
   foam_6l:       'p50_foam_6l_eco',
   foam_9l:       'p50_foam_9l',
@@ -149,11 +148,11 @@ export const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
   },
   'Transport': {
     steel: { co2_2k: 293, co2_5k: 64, water_6l: 14, water_9l: 13, foam_2l: 8, foam_6l: 262, foam_9l: 16, powder_2k: 36, powder_6k: 163, powder_9k: 80 },
-    p50:   { p50_foam_2l: 34, p50_foam_6l_eco: 322, p50_powder_2k: 50, p50_powder_6k: 210 },
+    p50:   { p50_foam_6l_eco: 322, p50_powder_2k: 50, p50_powder_6k: 210 },
   },
   'Universities': {
     steel: { co2_2k: 66, co2_5k: 5, water_6l: 86, water_9l: 5, foam_6l: 23, powder_2k: 346, powder_6k: 11, powder_9k: 1, wetchem_6l: 1 },
-    p50:   { p50_foam_2l: 79, p50_foam_6l_eco: 128, p50_wetchem_6l: 1 },
+    p50:   { p50_foam_6l_eco: 128, p50_wetchem_6l: 1 },
   },
   'Other': {
     steel: {},
