@@ -370,7 +370,7 @@ export default function AdminPage() {
 
   function loadEntries() {
     setLoadingEntries(true)
-    getAllEntries().then(data => {
+    getAllEntries(exportToken).then(data => {
       setEntries(data)
       setLoadingEntries(false)
     })

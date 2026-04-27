@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { getLeaderboard, type EventEntry } from '@/lib/eventStore'
-import { supabase } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/calculations'
 import { Trophy } from 'lucide-react'
 
@@ -34,16 +33,11 @@ export default function Leaderboard() {
       setMounted(true)
     })
 
-    const channel = supabase
-      .channel('leaderboard')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'event_entries' },
-        () => { getLeaderboard(10).then(setEntries) },
-      )
-      .subscribe()
+    const interval = setInterval(() => {
+      getLeaderboard(10).then(setEntries)
+    }, 30_000)
 
-    return () => { supabase.removeChannel(channel) }
+    return () => clearInterval(interval)
   }, [])
 
   return (

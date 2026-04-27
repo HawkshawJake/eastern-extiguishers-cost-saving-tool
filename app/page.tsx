@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Flame } from 'lucide-react'
 import Header from '@/components/Header'
@@ -8,13 +7,9 @@ import DayCounter from '@/components/DayCounter'
 import Leaderboard from '@/components/Leaderboard'
 import { useInventory } from '@/context/InventoryContext'
 import { INDUSTRIES, INDUSTRY_PRESETS } from '@/data/extinguishers'
-import { resetEntries } from '@/lib/eventStore'
-
 export default function WelcomePage() {
   const router = useRouter()
   const { company, industry, setCompany, setIndustry, applyPreset, resetInventory } = useInventory()
-  const [confirmReset, setConfirmReset] = useState(false)
-
   const hasPreset = industry && Object.keys(INDUSTRY_PRESETS[industry]?.steel ?? {}).length > 0
 
   function handleUsePreset() {
@@ -25,15 +20,6 @@ export default function WelcomePage() {
   function handleCustom() {
     resetInventory()
     router.push('/calculator')
-  }
-
-  async function handleResetDay() {
-    if (!confirmReset) {
-      setConfirmReset(true)
-      return
-    }
-    await resetEntries()
-    window.location.reload()
   }
 
   return (
@@ -124,33 +110,6 @@ export default function WelcomePage() {
             <Leaderboard />
           </div>
 
-          {/* Day reset — subtle, at the bottom */}
-          <div className="mt-10 text-center">
-            {confirmReset ? (
-              <div className="inline-flex items-center gap-3">
-                <span className="font-body text-sm text-gray-500">Reset all today's data?</span>
-                <button
-                  onClick={handleResetDay}
-                  className="font-body text-sm text-brand-red hover:underline"
-                >
-                  Yes, reset
-                </button>
-                <button
-                  onClick={() => setConfirmReset(false)}
-                  className="font-body text-sm text-gray-400 hover:underline"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={handleResetDay}
-                className="font-body text-xs text-gray-300 hover:text-gray-500 transition-colors"
-              >
-                Reset day data
-              </button>
-            )}
-          </div>
         </div>
       </main>
     </div>

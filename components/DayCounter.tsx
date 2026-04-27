@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getTotalSaving } from '@/lib/eventStore'
-import { supabase } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/calculations'
 
 function useCountUp(target: number) {
@@ -34,38 +32,16 @@ export default function DayCounter() {
 
   useEffect(() => {
     async function load() {
-      const saving = await getTotalSaving()
-      setTotal(saving)
-      // count is derived from the leaderboard subscription; fetch once for initial count
-      const { count: c } = await supabase
-        .from('event_entries')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', new Date().toISOString().split('T')[0])
-      setCount(c ?? 0)
+      const res = await fetch('/api/total-saving')
+      const json = await res.json()
+      setTotal(json.total ?? 0)
+      setCount(json.count ?? 0)
       setMounted(true)
     }
     load()
 
-    const channel = supabase
-      .channel('day-counter')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'event_entries' },
-        async () => {
-          const [saving, { count: c }] = await Promise.all([
-            getTotalSaving(),
-            supabase
-              .from('event_entries')
-              .select('id', { count: 'exact', head: true })
-              .gte('created_at', new Date().toISOString().split('T')[0]),
-          ])
-          setTotal(saving)
-          setCount(c ?? 0)
-        },
-      )
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
+    const interval = setInterval(load, 30_000)
+    return () => clearInterval(interval)
   }, [])
 
   const animatedTotal = useCountUp(total)
