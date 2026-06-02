@@ -103,7 +103,7 @@ export default function ResultsPage() {
     return () => clearTimeout(timer)
   }, [defaultTotals.saving])
 
-  async function handleLeadSubmit(data: { company: string; email: string; phone: string }) {
+  async function handleLeadSubmit(data: { company: string; email: string; phone: string; marketingConsent: boolean }) {
     if (entryIdRef.current) {
       await updateEntryContact(entryIdRef.current, data)
     } else {

@@ -24,7 +24,7 @@ export async function addEntry(
 
 export async function updateEntryContact(
   id: string,
-  contact: { email: string; phone?: string; company?: string },
+  contact: { email: string; phone?: string; company?: string; marketingConsent?: boolean },
 ): Promise<void> {
   const res = await fetch('/api/save-contact', {
     method: 'POST',

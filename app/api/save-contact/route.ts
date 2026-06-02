@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export async function POST(req: Request) {
-  const { id, email, phone, company } = await req.json()
+  const { id, email, phone, company, marketingConsent } = await req.json()
   if (!id || !email) {
     return NextResponse.json({ ok: false, error: 'Missing id or email' }, { status: 400 })
   }
@@ -11,6 +11,7 @@ export async function POST(req: Request) {
     .update({
       email,
       phone: phone || null,
+      marketing_consent: marketingConsent ?? false,
       ...(company ? { company } : {}),
     })
     .eq('id', id)

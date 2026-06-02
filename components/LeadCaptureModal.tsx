@@ -6,7 +6,7 @@ import { Flame, X } from 'lucide-react'
 interface Props {
   initialCompany: string
   saving: string
-  onSubmit: (data: { company: string; email: string; phone: string }) => Promise<void>
+  onSubmit: (data: { company: string; email: string; phone: string; marketingConsent: boolean }) => Promise<void>
   onDismiss: () => void
 }
 
@@ -14,6 +14,7 @@ export default function LeadCaptureModal({ initialCompany, saving, onSubmit, onD
   const [company, setCompany] = useState(initialCompany)
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [marketingConsent, setMarketingConsent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
@@ -25,7 +26,7 @@ export default function LeadCaptureModal({ initialCompany, saving, onSubmit, onD
     setError('')
     setSubmitting(true)
     try {
-      await onSubmit({ company: company.trim(), email: email.trim(), phone: phone.trim() })
+      await onSubmit({ company: company.trim(), email: email.trim(), phone: phone.trim(), marketingConsent })
       setDone(true)
       setTimeout(onDismiss, 2200)
     } catch {
@@ -125,6 +126,18 @@ export default function LeadCaptureModal({ initialCompany, saving, onSubmit, onD
                   onChange={e => setPhone(e.target.value)}
                 />
               </div>
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 accent-brand-red cursor-pointer"
+                  checked={marketingConsent}
+                  onChange={e => setMarketingConsent(e.target.checked)}
+                />
+                <span className="font-body text-xs text-gray-500 leading-relaxed">
+                  I would like to receive email updates from Eastern Extinguishers about fire safety products, services, industry news and special offers. I understand I can unsubscribe at any time.
+                </span>
+              </label>
 
               {error && (
                 <p className="font-body text-sm text-brand-red">{error}</p>
