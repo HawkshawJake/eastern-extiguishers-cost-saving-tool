@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { Flame } from 'lucide-react'
 import Header from '@/components/Header'
 import DayCounter from '@/components/DayCounter'
@@ -11,6 +12,11 @@ export default function WelcomePage() {
   const router = useRouter()
   const { company, industry, setCompany, setIndustry, applyPreset, resetInventory } = useInventory()
   const hasPreset = industry && Object.keys(INDUSTRY_PRESETS[industry]?.steel ?? {}).length > 0
+  const [hasSession, setHasSession] = useState(false)
+
+  useEffect(() => {
+    setHasSession(!!sessionStorage.getItem('ee_session_id'))
+  }, [])
 
   function handleUsePreset() {
     applyPreset(industry)
@@ -26,8 +32,7 @@ export default function WelcomePage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
 
-      {/* Attention-grabbing day savings counter */}
-      <DayCounter />
+      {hasSession && <DayCounter />}
 
       <main className="flex-1 px-5 py-8 md:py-10">
         <div className="max-w-4xl mx-auto">
@@ -44,8 +49,8 @@ export default function WelcomePage() {
             </p>
           </div>
 
-          {/* Two-column grid: form | leaderboard */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* Form + optional leaderboard */}
+          <div className={hasSession ? 'grid grid-cols-1 lg:grid-cols-2 gap-6 items-start' : 'max-w-lg mx-auto'}>
             {/* Form card */}
             <div className="bg-white rounded-md border border-gray-200 shadow-sm p-6 md:p-8">
               <div className="mb-5">
@@ -106,8 +111,8 @@ export default function WelcomePage() {
               )}
             </div>
 
-            {/* Leaderboard */}
-            <Leaderboard />
+            {/* Leaderboard — only shown when accessed via a session link */}
+            {hasSession && <Leaderboard />}
           </div>
 
         </div>
