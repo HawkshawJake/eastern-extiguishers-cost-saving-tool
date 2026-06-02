@@ -81,12 +81,14 @@ export default function ResultsPage() {
     const key = `ee_saved_${Math.round(defaultTotals.totalSteelCost)}_${Math.round(defaultTotals.totalP50Cost)}`
     if (sessionStorage.getItem(key)) return
     sessionStorage.setItem(key, '1')
+    const sessionId = sessionStorage.getItem('ee_session_id') ?? undefined
     addEntry({
       company: company || 'Anonymous',
       industry: industry || 'Other',
       saving: defaultTotals.saving,
       steel_inventory: steelInventory,
       p50_inventory: p50Inventory,
+      session_id: sessionId,
     }).then(id => {
       if (id) {
         entryIdRef.current = id
@@ -108,6 +110,7 @@ export default function ResultsPage() {
       await updateEntryContact(entryIdRef.current, data)
     } else {
       // Race condition: addEntry hadn't resolved yet — create a complete entry now
+      const sessionId = sessionStorage.getItem('ee_session_id') ?? undefined
       const id = await addEntry({
         company: data.company || company || 'Anonymous',
         industry: industry || 'Other',
@@ -116,6 +119,7 @@ export default function ResultsPage() {
         p50_inventory: p50Inventory,
         email: data.email,
         phone: data.phone,
+        session_id: sessionId,
       })
       if (id) {
         entryIdRef.current = id

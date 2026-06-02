@@ -1,114 +1,294 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Download, Lock, ChevronDown, ChevronUp, Leaf, Settings, Users, RotateCcw, Save, Mail, RefreshCw, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import {
+  Download, Lock, ChevronDown, ChevronUp, Settings, Users, RotateCcw, Save,
+  Mail, RefreshCw, Trash2, Plus, Copy, ArrowUpRight, Radio, Pencil, Check, X,
+} from 'lucide-react'
 import Header from '@/components/Header'
+import EntryDetail from '@/components/EntryDetail'
 import { getAllEntries, resetEntries, type EventEntry } from '@/lib/eventStore'
-import { STEEL_TYPES, P50_TYPES } from '@/data/extinguishers'
 import { useConfig } from '@/context/ConfigContext'
 import { defaultSiteConfig, type SiteConfig } from '@/lib/siteConfig'
-import { calcTotals, formatCurrency, formatPercent, type CalcConstants } from '@/lib/calculations'
+import { formatCurrency, type CalcConstants } from '@/lib/calculations'
 
-// ─── Entry detail (expandable row) ───────────────────────────────────────────
+// ─── Sessions tab ─────────────────────────────────────────────────────────────
 
-function EntryDetail({ entry }: { entry: EventEntry }) {
-  const { constants, steelTypes, p50Types } = useConfig()
-  const steel = entry.steel_inventory ?? {}
-  const p50 = entry.p50_inventory ?? {}
+interface Session {
+  id: string
+  name: string
+  slug: string
+  is_live: boolean
+  created_at: string
+  lead_count: number
+}
 
-  const steelLines = steelTypes.filter(t => (steel[t.id] ?? 0) > 0)
-  const p50Lines = p50Types.filter(t => (p50[t.id] ?? 0) > 0)
-  const totals = calcTotals(steel, p50, steelTypes, p50Types, 8, constants)
+function SessionsTab({ token }: { token: string }) {
+  const router = useRouter()
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [loading, setLoading] = useState(true)
+  const [creating, setCreating] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [createError, setCreateError] = useState('')
+  const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [renamingSaving, setRenamingSaving] = useState(false)
 
-  if (steelLines.length === 0 && p50Lines.length === 0) {
-    return (
-      <p className="font-body text-sm text-gray-400 italic px-4 py-3">
-        No inventory data stored (entered before this feature was added).
-      </p>
-    )
+  function loadSessions() {
+    setLoading(true)
+    fetch(`/api/admin/sessions?token=${token}`)
+      .then(r => r.json())
+      .then(json => { setSessions(json.sessions ?? []); setLoading(false) })
+  }
+
+  useEffect(() => { loadSessions() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newName.trim()) return
+    setSaving(true)
+    setCreateError('')
+    const res = await fetch('/api/admin/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName.trim(), token }),
+    })
+    const json = await res.json()
+    setSaving(false)
+    if (json.ok) {
+      setSessions(prev => [json.session, ...prev])
+      setNewName('')
+      setCreating(false)
+    } else {
+      setCreateError(json.error ?? 'Failed to create session')
+    }
+  }
+
+  async function handleToggleLive(session: Session) {
+    setTogglingId(session.id)
+    await fetch(`/api/admin/sessions/${session.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, is_live: !session.is_live }),
+    })
+    setSessions(prev => prev.map(s => s.id === session.id ? { ...s, is_live: !s.is_live } : s))
+    setTogglingId(null)
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(id)
+    await fetch(`/api/admin/sessions/${id}?token=${token}`, { method: 'DELETE' })
+    setDeletingId(null)
+    setConfirmDeleteId(null)
+    setSessions(prev => prev.filter(s => s.id !== id))
+  }
+
+  function copyUrl(slug: string, id: string) {
+    const url = `${window.location.origin}/event/${slug}`
+    navigator.clipboard.writeText(url)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  async function handleRename(id: string) {
+    if (!editName.trim()) return
+    setRenamingSaving(true)
+    await fetch(`/api/admin/sessions/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, name: editName.trim() }),
+    })
+    setSessions(prev => prev.map(s => s.id === id ? { ...s, name: editName.trim() } : s))
+    setRenamingSaving(false)
+    setEditingId(null)
   }
 
   return (
-    <div className="px-4 py-4 grid grid-cols-1 md:grid-cols-4 gap-6">
-      <div>
-        <p className="font-body text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
-          Steel Extinguishers
-        </p>
-        {steelLines.length === 0 ? (
-          <p className="font-body text-sm text-gray-400 italic">None</p>
-        ) : (
-          <ul className="space-y-1">
-            {steelLines.map(t => (
-              <li key={t.id} className="flex justify-between font-body text-sm">
-                <span className="text-gray-600">{t.label}</span>
-                <span className="font-semibold text-brand-black tabular-nums">×{steel[t.id]}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      <div>
-        <p className="font-body text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
-          P50 Composite
-        </p>
-        {p50Lines.length === 0 ? (
-          <p className="font-body text-sm text-gray-400 italic">None</p>
-        ) : (
-          <ul className="space-y-1">
-            {p50Lines.map(t => (
-              <li key={t.id} className="flex justify-between font-body text-sm">
-                <span className="text-gray-600">{t.label}</span>
-                <span className="font-semibold text-brand-black tabular-nums">×{p50[t.id]}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      {/* Contact info */}
-      <div>
-        <p className="font-body text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
-          Contact
-        </p>
-        {entry.email ? (
-          <div className="space-y-1">
-            <p className="font-body text-sm text-brand-black break-all">{entry.email}</p>
-            {entry.phone && (
-              <p className="font-body text-sm text-gray-500">{entry.phone}</p>
-            )}
-          </div>
-        ) : (
-          <p className="font-body text-sm text-gray-400 italic">No contact details</p>
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="font-heading font-bold text-2xl uppercase text-brand-black">Sessions</h1>
+          <p className="font-body text-sm text-gray-400 mt-0.5">
+            Each session generates a unique calculator link for a show or event.
+          </p>
+        </div>
+        {!creating && (
+          <button
+            onClick={() => setCreating(true)}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus size={15} />
+            New Session
+          </button>
         )}
       </div>
 
-      <div className="space-y-2">
-        <p className="font-body text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
-          8-Year Summary
-        </p>
-        <div className="flex justify-between font-body text-sm">
-          <span className="text-gray-500">Steel cost</span>
-          <span className="tabular-nums text-brand-black">{formatCurrency(totals.totalSteelCost)}</span>
-        </div>
-        <div className="flex justify-between font-body text-sm">
-          <span className="text-gray-500">P50 cost</span>
-          <span className="tabular-nums text-brand-black">{formatCurrency(totals.totalP50Cost)}</span>
-        </div>
-        <div className="flex justify-between font-body text-sm font-semibold border-t border-gray-100 pt-2 mt-2">
-          <span className="text-brand-black">Saving</span>
-          <span className="tabular-nums text-brand-red">{formatCurrency(totals.saving)}</span>
-        </div>
-        {totals.percentSaving > 0 && (
-          <p className="font-body text-xs text-gray-400">{formatPercent(totals.percentSaving)} reduction</p>
-        )}
-        {totals.co2Saving > 0 && (
-          <div className="flex items-center gap-1 mt-2">
-            <Leaf size={12} className="text-eco-green" />
-            <p className="font-body text-xs text-eco-green">
-              {totals.co2Saving.toFixed(1)} kg CO2e saved
-            </p>
+      {/* Create form */}
+      {creating && (
+        <form
+          onSubmit={handleCreate}
+          className="bg-white border border-gray-200 rounded-md shadow-sm px-5 py-4 mb-4 flex items-end gap-3"
+        >
+          <div className="flex-1">
+            <label className="block font-body text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
+              Session Name
+            </label>
+            <input
+              type="text"
+              className="input-field"
+              placeholder="e.g. Fire Safety Expo 2026"
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              autoFocus
+            />
+            {createError && <p className="font-body text-xs text-brand-red mt-1">{createError}</p>}
           </div>
-        )}
-      </div>
+          <button type="submit" className="btn-primary" disabled={saving || !newName.trim()}>
+            {saving ? 'Creating…' : 'Create →'}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setCreating(false); setNewName(''); setCreateError('') }}
+            className="btn-secondary"
+          >
+            Cancel
+          </button>
+        </form>
+      )}
+
+      {/* Sessions list */}
+      {loading ? (
+        <p className="font-body text-gray-400 text-center py-12">Loading…</p>
+      ) : sessions.length === 0 && !creating ? (
+        <div className="text-center py-16">
+          <Radio className="text-gray-200 mx-auto mb-3" size={40} />
+          <p className="font-body text-gray-400 mb-1">No sessions yet.</p>
+          <p className="font-body text-sm text-gray-300">Create one to get a shareable calculator link.</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden">
+          {sessions.map((session, idx) => (
+            <div
+              key={session.id}
+              className={`px-5 py-4 flex items-center gap-4 ${idx < sessions.length - 1 ? 'border-b border-gray-100' : ''}`}
+            >
+              {/* Live indicator */}
+              <button
+                onClick={() => handleToggleLive(session)}
+                disabled={togglingId === session.id}
+                title={session.is_live ? 'Mark as inactive' : 'Mark as live'}
+                className={`shrink-0 w-2.5 h-2.5 rounded-full transition-colors ${
+                  session.is_live ? 'bg-eco-green' : 'bg-gray-300'
+                } ${togglingId === session.id ? 'opacity-50' : 'hover:opacity-70'}`}
+              />
+
+              {/* Name + meta */}
+              <div className="flex-1 min-w-0">
+                {editingId === session.id ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      className="input-field py-1 text-sm flex-1"
+                      value={editName}
+                      onChange={e => setEditName(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') handleRename(session.id); if (e.key === 'Escape') setEditingId(null) }}
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => handleRename(session.id)}
+                      disabled={renamingSaving || !editName.trim()}
+                      className="text-eco-green hover:opacity-70 disabled:opacity-30"
+                    >
+                      <Check size={15} />
+                    </button>
+                    <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-600">
+                      <X size={15} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-heading font-bold text-brand-black text-sm">{session.name}</span>
+                    <span className={`text-xs font-body px-1.5 py-0.5 rounded-full ${
+                      session.is_live ? 'bg-eco-light text-eco-green' : 'bg-gray-100 text-gray-400'
+                    }`}>
+                      {session.is_live ? 'Live' : 'Inactive'}
+                    </span>
+                    <button
+                      onClick={() => { setEditingId(session.id); setEditName(session.name) }}
+                      className="text-gray-300 hover:text-gray-500 transition-colors"
+                      title="Rename session"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                  </div>
+                )}
+                <p className="font-body text-xs text-gray-400 mt-0.5">
+                  {new Date(session.created_at).toLocaleDateString('en-GB', {
+                    day: 'numeric', month: 'short', year: 'numeric',
+                  })}{' '}
+                  · {session.lead_count} {session.lead_count === 1 ? 'lead' : 'leads'}
+                </p>
+                <p className="font-body text-xs text-gray-300 mt-0.5 truncate">
+                  {typeof window !== 'undefined' ? window.location.origin : ''}/event/{session.slug}
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => copyUrl(session.slug, session.id)}
+                  className="btn-secondary flex items-center gap-1.5 text-xs py-1.5 px-3"
+                  title="Copy event URL"
+                >
+                  <Copy size={12} />
+                  {copiedId === session.id ? 'Copied!' : 'Copy URL'}
+                </button>
+
+                <button
+                  onClick={() => router.push(`/admin/session/${session.id}`)}
+                  className="btn-secondary flex items-center gap-1.5 text-xs py-1.5 px-3"
+                >
+                  <ArrowUpRight size={12} />
+                  View Leads
+                </button>
+
+                {confirmDeleteId === session.id ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-body text-xs text-gray-400">Delete session?</span>
+                    <button
+                      onClick={() => handleDelete(session.id)}
+                      disabled={deletingId === session.id}
+                      className="font-body text-xs text-brand-red hover:underline disabled:opacity-50"
+                    >
+                      {deletingId === session.id ? '…' : 'Yes'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteId(null)}
+                      className="font-body text-xs text-gray-400 hover:underline"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmDeleteId(session.id)}
+                    className="text-gray-200 hover:text-brand-red transition-colors p-1"
+                    title="Delete session"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -185,7 +365,6 @@ function SettingsTab({
 
   return (
     <div className="space-y-8">
-      {/* Service charges */}
       <div className="bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden">
         <div className="bg-gray-50 border-b border-gray-100 px-5 py-3">
           <h2 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black">
@@ -214,7 +393,6 @@ function SettingsTab({
         </div>
       </div>
 
-      {/* Steel types */}
       <div className="bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden">
         <div className="bg-gray-50 border-b border-gray-100 px-5 py-3">
           <h2 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black">
@@ -259,7 +437,6 @@ function SettingsTab({
         </table>
       </div>
 
-      {/* P50 types */}
       <div className="bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden">
         <div className="bg-gray-50 border-b border-gray-100 px-5 py-3">
           <h2 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black">
@@ -304,12 +481,8 @@ function SettingsTab({
         </table>
       </div>
 
-      {/* Actions */}
       <div className="flex items-center justify-between">
-        <button
-          onClick={handleReset}
-          className="btn-secondary flex items-center gap-2"
-        >
+        <button onClick={handleReset} className="btn-secondary flex items-center gap-2">
           <RotateCcw size={14} />
           Reset to Defaults
         </button>
@@ -336,7 +509,7 @@ function SettingsTab({
 
 // ─── Main admin page ──────────────────────────────────────────────────────────
 
-type Tab = 'leads' | 'settings'
+type Tab = 'sessions' | 'leads' | 'settings'
 
 export default function AdminPage() {
   const [password, setPassword] = useState('')
@@ -347,7 +520,7 @@ export default function AdminPage() {
   const [entries, setEntries] = useState<EventEntry[]>([])
   const [loadingEntries, setLoadingEntries] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [tab, setTab] = useState<Tab>('leads')
+  const [tab, setTab] = useState<Tab>('sessions')
   const [confirmReset, setConfirmReset] = useState(false)
   const [resetting, setResetting] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -366,6 +539,7 @@ export default function AdminPage() {
     setAuthLoading(false)
     if (data.ok) {
       setExportToken(data.exportToken)
+      sessionStorage.setItem('ee_admin_token', data.exportToken)
       setAuthed(true)
     } else {
       setAuthError('Incorrect password')
@@ -402,8 +576,8 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    if (authed) loadEntries()
-  }, [authed])
+    if (authed && tab === 'leads') loadEntries()
+  }, [authed, tab]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalSaving = entries.reduce((sum, e) => sum + e.saving, 0)
 
@@ -452,42 +626,41 @@ export default function AdminPage() {
 
         {/* Tab bar */}
         <div className="flex items-center gap-1 mb-6 border-b border-gray-200">
-          <button
-            onClick={() => setTab('leads')}
-            className={`flex items-center gap-2 px-4 py-2.5 font-body text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === 'leads'
-                ? 'border-brand-red text-brand-red'
-                : 'border-transparent text-gray-400 hover:text-gray-600'
-            }`}
-          >
-            <Users size={15} />
-            Leads
-            {entries.length > 0 && (
-              <span className="bg-gray-100 text-gray-600 rounded-full px-1.5 py-0.5 text-xs leading-none">
-                {entries.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setTab('settings')}
-            className={`flex items-center gap-2 px-4 py-2.5 font-body text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              tab === 'settings'
-                ? 'border-brand-red text-brand-red'
-                : 'border-transparent text-gray-400 hover:text-gray-600'
-            }`}
-          >
-            <Settings size={15} />
-            Settings
-          </button>
+          {([
+            { key: 'sessions' as Tab, icon: <Radio size={15} />, label: 'Sessions', count: null as number | null },
+            { key: 'leads'    as Tab, icon: <Users size={15} />,  label: 'All Leads', count: entries.length },
+            { key: 'settings' as Tab, icon: <Settings size={15} />, label: 'Settings', count: null as number | null },
+          ]).map(({ key, icon, label, count }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`flex items-center gap-2 px-4 py-2.5 font-body text-sm font-semibold border-b-2 -mb-px transition-colors ${
+                tab === key
+                  ? 'border-brand-red text-brand-red'
+                  : 'border-transparent text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              {icon}
+              {label}
+              {count != null && count > 0 && (
+                <span className="bg-gray-100 text-gray-600 rounded-full px-1.5 py-0.5 text-xs leading-none">
+                  {count}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
 
-        {/* Leads tab */}
+        {/* Sessions tab */}
+        {tab === 'sessions' && <SessionsTab token={exportToken} />}
+
+        {/* All Leads tab */}
         {tab === 'leads' && (
           <>
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h1 className="font-heading font-bold text-2xl uppercase text-brand-black">
-                  Event Leads
+                  All Leads
                 </h1>
                 {entries.length > 0 && (
                   <p className="font-body text-sm text-gray-500 mt-1">
@@ -560,6 +733,9 @@ export default function AdminPage() {
                       <th className="w-8 text-center font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-2 py-3">
                         <Mail size={13} />
                       </th>
+                      <th className="w-8 text-center font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-2 py-3" title="Marketing consent">
+                        Mkt
+                      </th>
                       <th className="w-8" />
                       <th className="w-8" />
                     </tr>
@@ -587,6 +763,12 @@ export default function AdminPage() {
                             <td className="px-2 py-3 text-center">
                               {entry.email
                                 ? <Mail size={13} className="text-eco-green mx-auto" />
+                                : <span className="text-gray-200">—</span>
+                              }
+                            </td>
+                            <td className="px-2 py-3 text-center font-body text-xs">
+                              {entry.marketing_consent
+                                ? <span className="text-eco-green">✓</span>
                                 : <span className="text-gray-200">—</span>
                               }
                             </td>
@@ -624,7 +806,7 @@ export default function AdminPage() {
                           </tr>
                           {isExpanded && (
                             <tr key={`${entry.id}-detail`} className="bg-gray-50 border-b border-gray-100">
-                              <td colSpan={7}>
+                              <td colSpan={8}>
                                 <EntryDetail entry={entry} />
                               </td>
                             </tr>

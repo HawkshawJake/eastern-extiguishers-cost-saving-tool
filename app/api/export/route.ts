@@ -8,11 +8,16 @@ export async function GET(req: NextRequest) {
     return new NextResponse('Unauthorized', { status: 401 })
   }
 
-  const { data, error } = await supabaseAdmin
+  const sessionId = req.nextUrl.searchParams.get('session_id')
+
+  let query = supabaseAdmin
     .from('event_entries')
-    .select('company, industry, saving, created_at, steel_inventory, p50_inventory, email, phone')
+    .select('company, industry, saving, created_at, steel_inventory, p50_inventory, email, phone, marketing_consent')
     .order('created_at', { ascending: false })
 
+  if (sessionId) query = query.eq('session_id', sessionId)
+
+  const { data, error } = await query
   if (error) return new NextResponse('Database error', { status: 500 })
 
   function summariseInventory(
@@ -27,7 +32,7 @@ export async function GET(req: NextRequest) {
   }
 
   const rows = [
-    ['Date/Time', 'Company', 'Industry', 'Saving (£)', 'Email', 'Phone', 'Steel Extinguishers', 'P50 Extinguishers'],
+    ['Date/Time', 'Company', 'Industry', 'Saving (£)', 'Email', 'Phone', 'Marketing Consent', 'Steel Extinguishers', 'P50 Extinguishers'],
     ...(data ?? []).map(e => [
       new Date(e.created_at).toLocaleString('en-GB'),
       e.company,
@@ -35,6 +40,7 @@ export async function GET(req: NextRequest) {
       Math.round(e.saving).toString(),
       e.email ?? '',
       e.phone ?? '',
+      e.marketing_consent ? 'Yes' : 'No',
       summariseInventory(e.steel_inventory, STEEL_TYPES),
       summariseInventory(e.p50_inventory, P50_TYPES),
     ]),
@@ -44,10 +50,12 @@ export async function GET(req: NextRequest) {
     .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
     .join('\r\n')
 
+  const filename = sessionId ? `ee-leads-session.csv` : 'eastern-extinguishers-leads.csv'
+
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': 'attachment; filename="eastern-extinguishers-leads.csv"',
+      'Content-Disposition': `attachment; filename="${filename}"`,
     },
   })
 }

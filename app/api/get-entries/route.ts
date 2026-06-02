@@ -6,10 +6,16 @@ export async function GET(req: NextRequest) {
   if (!process.env.EXPORT_SECRET || token !== process.env.EXPORT_SECRET) {
     return NextResponse.json({ ok: false }, { status: 401 })
   }
-  const { data, error } = await supabaseAdmin
+  const sessionId = req.nextUrl.searchParams.get('session_id')
+
+  let query = supabaseAdmin
     .from('event_entries')
-    .select('id, company, industry, saving, created_at, steel_inventory, p50_inventory, email, phone')
+    .select('id, company, industry, saving, created_at, steel_inventory, p50_inventory, email, phone, marketing_consent, session_id')
     .order('created_at', { ascending: false })
+
+  if (sessionId) query = query.eq('session_id', sessionId)
+
+  const { data, error } = await query
   if (error) return NextResponse.json({ ok: false }, { status: 500 })
   return NextResponse.json({ ok: true, data: data ?? [] })
 }

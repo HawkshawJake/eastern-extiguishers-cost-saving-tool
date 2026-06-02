@@ -8,10 +8,12 @@ export interface EventEntry {
   p50_inventory?: Record<string, number>
   email?: string
   phone?: string
+  marketing_consent?: boolean
+  session_id?: string
 }
 
 export async function addEntry(
-  entry: Pick<EventEntry, 'company' | 'industry' | 'saving' | 'steel_inventory' | 'p50_inventory'> & { email?: string; phone?: string },
+  entry: Pick<EventEntry, 'company' | 'industry' | 'saving' | 'steel_inventory' | 'p50_inventory'> & { email?: string; phone?: string; session_id?: string },
 ): Promise<string> {
   const res = await fetch('/api/add-entry', {
     method: 'POST',
@@ -35,33 +37,41 @@ export async function updateEntryContact(
   if (!json.ok) throw new Error(json.error ?? 'Failed to save contact details')
 }
 
-export async function getLeaderboard(limit = 10): Promise<EventEntry[]> {
-  const res = await fetch(`/api/leaderboard?limit=${limit}`)
+export async function getLeaderboard(limit = 10, sessionId?: string): Promise<EventEntry[]> {
+  const params = new URLSearchParams({ limit: String(limit) })
+  if (sessionId) params.set('session_id', sessionId)
+  const res = await fetch(`/api/leaderboard?${params}`)
   const json = await res.json()
   return json.data ?? []
 }
 
-export async function getTotalSaving(): Promise<number> {
-  const res = await fetch('/api/total-saving')
+export async function getTotalSaving(sessionId?: string): Promise<{ total: number; count: number }> {
+  const params = sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ''
+  const res = await fetch(`/api/total-saving${params}`)
   const json = await res.json()
-  return json.total ?? 0
+  return { total: json.total ?? 0, count: json.count ?? 0 }
 }
 
-export async function getAllEntries(token: string): Promise<EventEntry[]> {
-  const res = await fetch(`/api/get-entries?token=${encodeURIComponent(token)}`)
+export async function getAllEntries(token: string, sessionId?: string): Promise<EventEntry[]> {
+  const url = sessionId
+    ? `/api/get-entries?token=${encodeURIComponent(token)}&session_id=${encodeURIComponent(sessionId)}`
+    : `/api/get-entries?token=${encodeURIComponent(token)}`
+  const res = await fetch(url)
   const json = await res.json()
   return json.data ?? []
 }
 
-export async function resetEntries(token: string): Promise<void> {
+export async function resetEntries(token: string, sessionId?: string): Promise<void> {
   await fetch('/api/reset-entries', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token }),
+    body: JSON.stringify({ token, ...(sessionId ? { session_id: sessionId } : {}) }),
   })
   try {
     for (const key of Object.keys(sessionStorage)) {
-      if (key.startsWith('ee_')) sessionStorage.removeItem(key)
+      if (key.startsWith('ee_') && key !== 'ee_session_id' && key !== 'ee_session_name') {
+        sessionStorage.removeItem(key)
+      }
     }
   } catch { /* ignore */ }
 }

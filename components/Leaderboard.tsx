@@ -26,25 +26,32 @@ function RankBadge({ index }: { index: number }) {
 export default function Leaderboard() {
   const [entries, setEntries] = useState<EventEntry[]>([])
   const [mounted, setMounted] = useState(false)
+  const [sessionName, setSessionName] = useState<string | null>(null)
 
   useEffect(() => {
-    getLeaderboard(10).then(data => {
+    const sessionId = sessionStorage.getItem('ee_session_id') ?? undefined
+    const name = sessionStorage.getItem('ee_session_name')
+    if (name) setSessionName(name)
+
+    getLeaderboard(10, sessionId).then(data => {
       setEntries(data)
       setMounted(true)
     })
 
     const interval = setInterval(() => {
-      getLeaderboard(10).then(setEntries)
+      getLeaderboard(10, sessionId).then(setEntries)
     }, 30_000)
 
     return () => clearInterval(interval)
   }, [])
 
+  const heading = sessionName ? `Top Savings — ${sessionName}` : 'Top Savings Today'
+
   return (
     <div className="bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden flex flex-col">
       <div className="bg-brand-red px-5 py-3">
-        <h3 className="font-heading font-bold uppercase tracking-wide text-white text-lg">
-          Top Savings Today
+        <h3 className="font-heading font-bold uppercase tracking-wide text-white text-lg leading-tight">
+          {heading}
         </h3>
       </div>
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { getTotalSaving } from '@/lib/eventStore'
 import { formatCurrency } from '@/lib/calculations'
 
 function useCountUp(target: number) {
@@ -29,13 +30,17 @@ export default function DayCounter() {
   const [mounted, setMounted] = useState(false)
   const [total, setTotal] = useState(0)
   const [count, setCount] = useState(0)
+  const [sessionName, setSessionName] = useState<string | null>(null)
 
   useEffect(() => {
+    const sessionId = sessionStorage.getItem('ee_session_id') ?? undefined
+    const name = sessionStorage.getItem('ee_session_name')
+    if (name) setSessionName(name)
+
     async function load() {
-      const res = await fetch('/api/total-saving')
-      const json = await res.json()
-      setTotal(json.total ?? 0)
-      setCount(json.count ?? 0)
+      const result = await getTotalSaving(sessionId)
+      setTotal(result.total)
+      setCount(result.count)
       setMounted(true)
     }
     load()
@@ -45,6 +50,10 @@ export default function DayCounter() {
   }, [])
 
   const animatedTotal = useCountUp(total)
+
+  const label = sessionName
+    ? `Total savings calculated at ${sessionName}`
+    : 'Total savings calculated today'
 
   if (!mounted) {
     return (
@@ -62,7 +71,7 @@ export default function DayCounter() {
     <div className="bg-brand-dark w-full py-8 md:py-10">
       <div className="max-w-5xl mx-auto px-5 text-center">
         <p className="font-body text-white/40 uppercase tracking-widest text-xs mb-3">
-          Total savings calculated today
+          {label}
         </p>
         <p className="font-heading font-black text-5xl md:text-6xl text-brand-red-light tabular-nums leading-none">
           {formatCurrency(animatedTotal)}
