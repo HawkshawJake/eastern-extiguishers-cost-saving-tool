@@ -49,7 +49,17 @@ export async function DELETE(
   if (!checkAuth(req.nextUrl.searchParams.get('token'))) {
     return NextResponse.json({ ok: false }, { status: 401 })
   }
+  const deleteLeads = req.nextUrl.searchParams.get('delete_leads') === 'true'
   const { id } = await params
+
+  if (deleteLeads) {
+    const { error: leadsError } = await supabaseAdmin
+      .from('event_entries')
+      .delete()
+      .eq('session_id', id)
+    if (leadsError) return NextResponse.json({ ok: false, error: leadsError.message }, { status: 500 })
+  }
+
   const { error } = await supabaseAdmin
     .from('sessions')
     .delete()

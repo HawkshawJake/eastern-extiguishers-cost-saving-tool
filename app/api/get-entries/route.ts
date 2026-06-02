@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabaseAdmin
     .from('event_entries')
-    .select('id, company, industry, saving, created_at, steel_inventory, p50_inventory, email, phone, marketing_consent, session_id')
+    .select('id, company, industry, saving, created_at, steel_inventory, p50_inventory, email, phone, marketing_consent, session_id, sessions(name)')
     .order('created_at', { ascending: false })
 
   if (sessionId) query = query.eq('session_id', sessionId)

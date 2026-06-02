@@ -10,6 +10,7 @@ export interface EventEntry {
   phone?: string
   marketing_consent?: boolean
   session_id?: string
+  sessions?: { name: string } | null
 }
 
 export async function addEntry(

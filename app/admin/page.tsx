@@ -81,9 +81,9 @@ function SessionsTab({ token }: { token: string }) {
     setTogglingId(null)
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, deleteLeads: boolean) {
     setDeletingId(id)
-    await fetch(`/api/admin/sessions/${id}?token=${token}`, { method: 'DELETE' })
+    await fetch(`/api/admin/sessions/${id}?token=${token}&delete_leads=${deleteLeads}`, { method: 'DELETE' })
     setDeletingId(null)
     setConfirmDeleteId(null)
     setSessions(prev => prev.filter(s => s.id !== id))
@@ -259,21 +259,32 @@ function SessionsTab({ token }: { token: string }) {
                 </button>
 
                 {confirmDeleteId === session.id ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-body text-xs text-gray-400">Delete session?</span>
-                    <button
-                      onClick={() => handleDelete(session.id)}
-                      disabled={deletingId === session.id}
-                      className="font-body text-xs text-brand-red hover:underline disabled:opacity-50"
-                    >
-                      {deletingId === session.id ? '…' : 'Yes'}
-                    </button>
-                    <button
-                      onClick={() => setConfirmDeleteId(null)}
-                      className="font-body text-xs text-gray-400 hover:underline"
-                    >
-                      Cancel
-                    </button>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="font-body text-xs text-gray-500">Also delete the {session.lead_count} {session.lead_count === 1 ? 'lead' : 'leads'}?</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleDelete(session.id, true)}
+                        disabled={!!deletingId}
+                        className="font-body text-xs text-brand-red hover:underline disabled:opacity-50"
+                      >
+                        {deletingId === session.id ? '…' : 'Delete all'}
+                      </button>
+                      <span className="text-gray-300">·</span>
+                      <button
+                        onClick={() => handleDelete(session.id, false)}
+                        disabled={!!deletingId}
+                        className="font-body text-xs text-gray-500 hover:underline disabled:opacity-50"
+                      >
+                        Keep leads
+                      </button>
+                      <span className="text-gray-300">·</span>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="font-body text-xs text-gray-400 hover:underline"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button
@@ -729,6 +740,7 @@ export default function AdminPage() {
                       <th className="text-left font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-4 py-3">Time</th>
                       <th className="text-left font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-4 py-3">Company</th>
                       <th className="text-left font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-4 py-3">Industry</th>
+                      <th className="text-left font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-4 py-3">Session</th>
                       <th className="text-right font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-4 py-3">Saving</th>
                       <th className="w-8 text-center font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-2 py-3">
                         <Mail size={13} />
@@ -757,6 +769,9 @@ export default function AdminPage() {
                             </td>
                             <td className="font-body text-sm text-brand-black px-4 py-3">{entry.company}</td>
                             <td className="font-body text-sm text-gray-500 px-4 py-3">{entry.industry}</td>
+                            <td className="font-body text-xs text-gray-400 px-4 py-3 whitespace-nowrap">
+                              {entry.sessions?.name ?? <span className="text-gray-200">—</span>}
+                            </td>
                             <td className="font-heading font-bold text-sm text-brand-red text-right px-4 py-3 tabular-nums">
                               {formatCurrency(entry.saving)}
                             </td>
@@ -806,7 +821,7 @@ export default function AdminPage() {
                           </tr>
                           {isExpanded && (
                             <tr key={`${entry.id}-detail`} className="bg-gray-50 border-b border-gray-100">
-                              <td colSpan={8}>
+                              <td colSpan={9}>
                                 <EntryDetail entry={entry} />
                               </td>
                             </tr>
