@@ -187,7 +187,7 @@ export default function ProposalDocument({ entry, proposal, steelTypes, p50Types
                 <td className="px-4 py-2.5 font-semibold text-brand-black">Your saving</td>
                 <td className="px-4 py-2.5 text-right tabular-nums text-eco-green">
                   {totals.totalSteelUnits > 0
-                    ? `−${formatPercent((totals.totalSteelUnits - totals.totalP50Units) / totals.totalSteelUnits)}`
+                    ? formatPercent((totals.totalSteelUnits - totals.totalP50Units) / totals.totalSteelUnits)
                     : '—'}
                 </td>
                 <td className="px-4 py-2.5 text-right font-heading font-bold text-brand-red tabular-nums">
