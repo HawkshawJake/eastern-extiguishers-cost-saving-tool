@@ -9,6 +9,7 @@ import {
 import Header from '@/components/Header'
 import EntryDetail from '@/components/EntryDetail'
 import { getAllEntries, resetEntries, type EventEntry } from '@/lib/eventStore'
+import { listProposals, quoteTotals, type ProposalListItem } from '@/lib/proposals'
 import { useConfig } from '@/context/ConfigContext'
 import { defaultSiteConfig, type SiteConfig } from '@/lib/siteConfig'
 import { formatCurrency, type CalcConstants } from '@/lib/calculations'
@@ -304,6 +305,105 @@ function SessionsTab({ token }: { token: string }) {
   )
 }
 
+// ─── Proposals tab ────────────────────────────────────────────────────────────
+
+function ProposalsTab({ token }: { token: string }) {
+  const router = useRouter()
+  const [proposals, setProposals] = useState<ProposalListItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  function load() {
+    setLoading(true)
+    listProposals(token).then(data => { setProposals(data); setLoading(false) })
+  }
+
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="font-heading font-bold text-2xl uppercase text-brand-black">Proposals</h1>
+          <p className="font-body text-sm text-gray-400 mt-0.5">
+            Saved quotes you can re-open, edit and export. Start one from any lead.
+          </p>
+        </div>
+        <button onClick={load} disabled={loading} className="btn-secondary flex items-center gap-2">
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          Refresh
+        </button>
+      </div>
+
+      {loading ? (
+        <p className="font-body text-gray-400 text-center py-12">Loading…</p>
+      ) : proposals.length === 0 ? (
+        <div className="text-center py-16">
+          <FileText className="text-gray-200 mx-auto mb-3" size={40} />
+          <p className="font-body text-gray-400 mb-1">No proposals yet.</p>
+          <p className="font-body text-sm text-gray-300">
+            Open a lead and click the <FileText size={12} className="inline -mt-0.5" /> icon to create one.
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50">
+                <th className="text-left font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-4 py-3">Company</th>
+                <th className="text-left font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-4 py-3">Reference</th>
+                <th className="text-left font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-4 py-3">Status</th>
+                <th className="text-right font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-4 py-3">Quote Total</th>
+                <th className="text-left font-body text-xs font-semibold uppercase tracking-widest text-gray-400 px-4 py-3">Last Edited</th>
+                <th className="w-8" />
+              </tr>
+            </thead>
+            <tbody>
+              {proposals.map(p => {
+                const total = quoteTotals(p.line_items ?? [], p.discount_pct, p.vat_rate).total
+                return (
+                  <tr
+                    key={p.id}
+                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/admin/proposal/${p.entry_id}`)}
+                  >
+                    <td className="font-body text-sm text-brand-black px-4 py-3">
+                      {p.event_entries?.company ?? <span className="text-gray-300">—</span>}
+                      {p.event_entries?.sessions?.name && (
+                        <span className="block font-body text-xs text-gray-400">{p.event_entries.sessions.name}</span>
+                      )}
+                    </td>
+                    <td className="font-body text-sm text-gray-500 px-4 py-3">
+                      {p.reference || <span className="text-gray-300">—</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-body font-semibold ${
+                        p.status === 'approved' ? 'bg-eco-light text-eco-green' : 'bg-amber-50 text-amber-600'
+                      }`}>
+                        {p.status === 'approved' ? 'Approved' : 'Draft'}
+                      </span>
+                    </td>
+                    <td className="font-heading font-bold text-sm text-brand-red text-right px-4 py-3 tabular-nums">
+                      {total > 0 ? `£${total.toLocaleString('en-GB', { maximumFractionDigits: 0 })}` : '—'}
+                    </td>
+                    <td className="font-body text-xs text-gray-400 px-4 py-3 whitespace-nowrap">
+                      {new Date(p.updated_at).toLocaleString('en-GB', {
+                        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+                      })}
+                    </td>
+                    <td className="px-3 py-3 text-gray-300">
+                      <ArrowUpRight size={16} />
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Settings tab ─────────────────────────────────────────────────────────────
 
 const CONSTANT_LABELS: { key: keyof CalcConstants; label: string; unit: string }[] = [
@@ -520,7 +620,7 @@ function SettingsTab({
 
 // ─── Main admin page ──────────────────────────────────────────────────────────
 
-type Tab = 'sessions' | 'leads' | 'settings'
+type Tab = 'sessions' | 'leads' | 'proposals' | 'settings'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -641,6 +741,7 @@ export default function AdminPage() {
           {([
             { key: 'sessions' as Tab, icon: <Radio size={15} />, label: 'Sessions', count: null as number | null },
             { key: 'leads'    as Tab, icon: <Users size={15} />,  label: 'All Leads', count: entries.length },
+            { key: 'proposals' as Tab, icon: <FileText size={15} />, label: 'Proposals', count: null as number | null },
             { key: 'settings' as Tab, icon: <Settings size={15} />, label: 'Settings', count: null as number | null },
           ]).map(({ key, icon, label, count }) => (
             <button
@@ -665,6 +766,9 @@ export default function AdminPage() {
 
         {/* Sessions tab */}
         {tab === 'sessions' && <SessionsTab token={exportToken} />}
+
+        {/* Proposals tab */}
+        {tab === 'proposals' && <ProposalsTab token={exportToken} />}
 
         {/* All Leads tab */}
         {tab === 'leads' && (

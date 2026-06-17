@@ -115,6 +115,30 @@ export async function getProposal(entryId: string, token: string): Promise<Propo
   return { entry: json.entry, proposal: json.proposal ?? null }
 }
 
+export interface ProposalListItem {
+  id: string
+  entry_id: string
+  status: ProposalStatus
+  reference?: string | null
+  prepared_by?: string | null
+  line_items?: LineItem[]
+  discount_pct?: number
+  vat_rate?: number
+  updated_at: string
+  event_entries?: {
+    company: string
+    industry: string
+    saving: number
+    sessions?: { name: string } | null
+  } | null
+}
+
+export async function listProposals(token: string): Promise<ProposalListItem[]> {
+  const res = await fetch(`/api/proposals?token=${encodeURIComponent(token)}`)
+  const json = await res.json()
+  return json.data ?? []
+}
+
 export async function saveProposal(proposal: Proposal, token: string): Promise<Proposal> {
   const res = await fetch('/api/proposal', {
     method: 'POST',
