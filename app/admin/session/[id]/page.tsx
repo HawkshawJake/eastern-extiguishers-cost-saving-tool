@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Download, ChevronDown, ChevronUp, Mail, RefreshCw, Trash2, ArrowLeft } from 'lucide-react'
+import { Download, ChevronDown, ChevronUp, Mail, RefreshCw, Trash2, ArrowLeft, FileText } from 'lucide-react'
 import Header from '@/components/Header'
 import EntryDetail from '@/components/EntryDetail'
 import { formatCurrency } from '@/lib/calculations'
@@ -205,6 +205,7 @@ export default function SessionPage() {
                   </th>
                   <th className="w-8" />
                   <th className="w-8" />
+                  <th className="w-8" />
                 </tr>
               </thead>
               <tbody>
@@ -238,6 +239,15 @@ export default function SessionPage() {
                             ? <span className="text-eco-green">✓</span>
                             : <span className="text-gray-200">—</span>
                           }
+                        </td>
+                        <td className="px-2 py-3" onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={() => router.push(`/admin/proposal/${entry.id}`)}
+                            className="text-gray-300 hover:text-brand-red transition-colors"
+                            title="Create / edit proposal"
+                          >
+                            <FileText size={15} />
+                          </button>
                         </td>
                         <td className="px-3 py-3 text-gray-300">
                           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -273,7 +283,7 @@ export default function SessionPage() {
                       </tr>
                       {isExpanded && (
                         <tr key={`${entry.id}-detail`} className="bg-gray-50 border-b border-gray-100">
-                          <td colSpan={8}>
+                          <td colSpan={9}>
                             <EntryDetail entry={entry} />
                           </td>
                         </tr>

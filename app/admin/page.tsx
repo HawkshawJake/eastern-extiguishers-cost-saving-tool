@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Download, Lock, ChevronDown, ChevronUp, Settings, Users, RotateCcw, Save,
-  Mail, RefreshCw, Trash2, Plus, Copy, ArrowUpRight, Radio, Pencil, Check, X,
+  Mail, RefreshCw, Trash2, Plus, Copy, ArrowUpRight, Radio, Pencil, Check, X, FileText,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import EntryDetail from '@/components/EntryDetail'
@@ -523,6 +523,7 @@ function SettingsTab({
 type Tab = 'sessions' | 'leads' | 'settings'
 
 export default function AdminPage() {
+  const router = useRouter()
   const [password, setPassword] = useState('')
   const [authed, setAuthed] = useState(false)
   const [authError, setAuthError] = useState('')
@@ -750,6 +751,7 @@ export default function AdminPage() {
                       </th>
                       <th className="w-8" />
                       <th className="w-8" />
+                      <th className="w-8" />
                     </tr>
                   </thead>
                   <tbody>
@@ -787,6 +789,15 @@ export default function AdminPage() {
                                 : <span className="text-gray-200">—</span>
                               }
                             </td>
+                            <td className="px-2 py-3" onClick={e => e.stopPropagation()}>
+                              <button
+                                onClick={() => router.push(`/admin/proposal/${entry.id}`)}
+                                className="text-gray-300 hover:text-brand-red transition-colors"
+                                title="Create / edit proposal"
+                              >
+                                <FileText size={15} />
+                              </button>
+                            </td>
                             <td className="px-3 py-3 text-gray-300">
                               {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </td>
@@ -821,7 +832,7 @@ export default function AdminPage() {
                           </tr>
                           {isExpanded && (
                             <tr key={`${entry.id}-detail`} className="bg-gray-50 border-b border-gray-100">
-                              <td colSpan={9}>
+                              <td colSpan={10}>
                                 <EntryDetail entry={entry} />
                               </td>
                             </tr>
