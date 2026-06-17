@@ -3,6 +3,14 @@ import type { EventEntry } from '@/lib/eventStore'
 
 export type ProposalStatus = 'draft' | 'approved'
 
+// A single billable line on the quote ("checkout") — supply, install, or ancillary.
+export interface LineItem {
+  id: string
+  description: string
+  qty: number
+  unit_price: number
+}
+
 export interface Proposal {
   id?: string
   entry_id: string
@@ -13,9 +21,10 @@ export interface Proposal {
   site_address?: string
   num_sites?: number | null
   install_date?: string | null
-  // Pricing
+  // The quote
+  line_items?: LineItem[]
   discount_pct?: number
-  price_overrides?: Record<string, number>
+  vat_rate?: number
   comparison_years?: number
   // Narrative & terms
   cover_note?: string
@@ -29,29 +38,67 @@ export interface Proposal {
   updated_at?: string
 }
 
-// A blank draft for a brand-new proposal on a given lead.
 export function emptyProposal(entryId: string): Proposal {
   return {
     entry_id: entryId,
     status: 'draft',
+    line_items: [],
     discount_pct: 0,
-    price_overrides: {},
+    vat_rate: 20,
     comparison_years: 8,
   }
 }
 
-// Returns P50 types with a discount and/or per-line unit-price overrides applied.
-// An override replaces the configured unit price; the discount then applies on top.
-export function applyP50Pricing(
-  p50Types: P50Type[],
+// Seed the quote from the P50 units the lead was recommended, at configured prices.
+// Engineers edit these (and add their own lines) after a site visit.
+export function seedLineItems(entry: EventEntry, p50Types: P50Type[]): LineItem[] {
+  const p50 = entry.p50_inventory ?? {}
+  return p50Types
+    .filter(t => (p50[t.id] ?? 0) > 0)
+    .map(t => ({ id: t.id, description: t.label, qty: p50[t.id], unit_price: t.clientCost }))
+}
+
+export interface QuoteTotals {
+  subtotal: number
+  discount: number
+  net: number
+  vat: number
+  total: number
+}
+
+export function quoteTotals(
+  items: LineItem[] = [],
   discountPct = 0,
-  overrides: Record<string, number> = {},
-): P50Type[] {
+  vatRate = 0,
+): QuoteTotals {
+  const subtotal = items.reduce((s, i) => s + (i.qty || 0) * (i.unit_price || 0), 0)
+  const discount = subtotal * ((discountPct || 0) / 100)
+  const net = subtotal - discount
+  const vat = net * ((vatRate || 0) / 100)
+  return { subtotal, discount, net, vat, total: net + vat }
+}
+
+// The P50 quantities the saving/forward projection should use: prefer the
+// engineer's edited line items (for known P50 types), else the lead's original mix.
+export function effectiveP50Inventory(
+  proposal: Proposal,
+  entry: EventEntry,
+  p50Types: P50Type[],
+): Record<string, number> {
+  const items = proposal.line_items ?? []
+  if (items.length === 0) return entry.p50_inventory ?? {}
+  const known = new Set(p50Types.map(t => t.id))
+  const inv: Record<string, number> = {}
+  for (const li of items) {
+    if (known.has(li.id)) inv[li.id] = (inv[li.id] ?? 0) + (li.qty || 0)
+  }
+  return Object.keys(inv).length > 0 ? inv : (entry.p50_inventory ?? {})
+}
+
+// Returns P50 types with the proposal discount applied to their unit price.
+export function applyP50Pricing(p50Types: P50Type[], discountPct = 0): P50Type[] {
   const factor = 1 - (discountPct || 0) / 100
-  return p50Types.map(t => {
-    const base = overrides[t.id] ?? t.clientCost
-    return { ...t, clientCost: Math.max(0, base * factor) }
-  })
+  return p50Types.map(t => ({ ...t, clientCost: Math.max(0, t.clientCost * factor) }))
 }
 
 export interface ProposalBundle {

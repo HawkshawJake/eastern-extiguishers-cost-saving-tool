@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 const PROPOSAL_COLUMNS =
-  'id, entry_id, status, contact_name, contact_role, site_address, num_sites, install_date, discount_pct, price_overrides, comparison_years, cover_note, valid_until, payment_terms, warranty_notes, prepared_by, reference, created_at, updated_at'
+  'id, entry_id, status, contact_name, contact_role, site_address, num_sites, install_date, line_items, discount_pct, vat_rate, comparison_years, cover_note, valid_until, payment_terms, warranty_notes, prepared_by, reference, created_at, updated_at'
 
 function authed(token: string | null): boolean {
   return !!process.env.EXPORT_SECRET && token === process.env.EXPORT_SECRET
@@ -56,8 +56,9 @@ export async function POST(req: Request) {
     site_address: proposal.site_address || null,
     num_sites: proposal.num_sites ?? null,
     install_date: proposal.install_date || null,
+    line_items: Array.isArray(proposal.line_items) ? proposal.line_items : [],
     discount_pct: proposal.discount_pct ?? 0,
-    price_overrides: proposal.price_overrides ?? {},
+    vat_rate: proposal.vat_rate ?? 20,
     comparison_years: proposal.comparison_years ?? 8,
     cover_note: proposal.cover_note || null,
     valid_until: proposal.valid_until || null,

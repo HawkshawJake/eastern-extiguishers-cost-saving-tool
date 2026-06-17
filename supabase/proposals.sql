@@ -11,9 +11,11 @@ create table if not exists proposals (
   site_address    text,
   num_sites       int,
   install_date    date,
-  -- Pricing
-  discount_pct    numeric default 0,                       -- % off P50 unit pricing
-  price_overrides jsonb   default '{}'::jsonb,             -- { p50_type_id: unit_price }
+  -- The quote ("checkout")
+  line_items      jsonb   default '[]'::jsonb,             -- [{ id, description, qty, unit_price }]
+  discount_pct    numeric default 0,                       -- % off the quote subtotal
+  vat_rate        numeric default 20,                      -- % VAT added to the net
+  price_overrides jsonb   default '{}'::jsonb,             -- (legacy) { p50_type_id: unit_price }
   comparison_years int    default 8,
   -- Narrative & terms
   cover_note      text,
@@ -26,6 +28,11 @@ create table if not exists proposals (
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
 );
+
+-- Additive migration: if you created the table from an earlier version of this
+-- file, these bring it up to date. No-ops if the columns already exist.
+alter table proposals add column if not exists line_items jsonb default '[]'::jsonb;
+alter table proposals add column if not exists vat_rate   numeric default 20;
 
 -- Service-role key (used by the API routes) bypasses RLS, matching the rest of
 -- this app. Enable RLS with no public policy so the anon key cannot read leads' data.

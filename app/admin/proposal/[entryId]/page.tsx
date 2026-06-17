@@ -1,13 +1,17 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, Save, Check, Printer, CircleDot } from 'lucide-react'
+import { ArrowLeft, Save, Check, Printer, CircleDot, Plus, Trash2 } from 'lucide-react'
 import Header from '@/components/Header'
 import ProposalDocument from '@/components/ProposalDocument'
 import { useConfig } from '@/context/ConfigContext'
-import { getProposal, saveProposal, emptyProposal, type Proposal } from '@/lib/proposals'
+import {
+  getProposal, saveProposal, emptyProposal, seedLineItems, quoteTotals,
+  type Proposal, type LineItem,
+} from '@/lib/proposals'
 import type { EventEntry } from '@/lib/eventStore'
+import type { P50Type } from '@/data/extinguishers'
 
 function Field({
   label, children, hint,
@@ -30,6 +34,10 @@ export default function ProposalBuilderPage() {
 
   const { steelTypes, p50Types, constants } = useConfig()
 
+  // Always-current P50 types for seeding, without making the load effect depend on config.
+  const seededP50TypesRef = useRef<P50Type[]>(p50Types)
+  seededP50TypesRef.current = p50Types
+
   const [token, setToken] = useState('')
   const [entry, setEntry] = useState<EventEntry | null>(null)
   const [proposal, setProposal] = useState<Proposal>(emptyProposal(entryId))
@@ -43,13 +51,28 @@ export default function ProposalBuilderPage() {
     setStatus('idle')
   }, [])
 
-  function setOverride(id: string, value: string) {
-    setProposal(prev => {
-      const next = { ...(prev.price_overrides ?? {}) }
-      if (value === '') delete next[id]
-      else next[id] = parseFloat(value) || 0
-      return { ...prev, price_overrides: next }
-    })
+  function updateItem(id: string, patch: Partial<LineItem>) {
+    setProposal(prev => ({
+      ...prev,
+      line_items: (prev.line_items ?? []).map(li => li.id === id ? { ...li, ...patch } : li),
+    }))
+    setStatus('idle')
+  }
+
+  function addItem() {
+    const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `item_${Date.now()}`
+    setProposal(prev => ({
+      ...prev,
+      line_items: [...(prev.line_items ?? []), { id, description: '', qty: 1, unit_price: 0 }],
+    }))
+    setStatus('idle')
+  }
+
+  function removeItem(id: string) {
+    setProposal(prev => ({
+      ...prev,
+      line_items: (prev.line_items ?? []).filter(li => li.id !== id),
+    }))
     setStatus('idle')
   }
 
@@ -63,10 +86,11 @@ export default function ProposalBuilderPage() {
       if (bundle.proposal) {
         setProposal({ ...emptyProposal(entryId), ...bundle.proposal })
       } else {
-        // Seed a fresh draft with sensible defaults from the lead.
+        // Seed a fresh draft from the lead: recommended P50 units as quote lines.
         setProposal(prev => ({
           ...prev,
           contact_name: bundle.entry.company ?? '',
+          line_items: seedLineItems(bundle.entry, seededP50TypesRef.current),
         }))
       }
       setLoading(false)
@@ -116,7 +140,8 @@ export default function ProposalBuilderPage() {
     )
   }
 
-  const p50WithQty = p50Types.filter(t => (entry.p50_inventory?.[t.id] ?? 0) > 0)
+  const items = proposal.line_items ?? []
+  const quote = quoteTotals(items, proposal.discount_pct, proposal.vat_rate)
   const isApproved = proposal.status === 'approved'
 
   return (
@@ -197,42 +222,95 @@ export default function ProposalBuilderPage() {
               </div>
             </section>
 
-            {/* Pricing */}
+            {/* Quote items */}
             <section className="bg-white rounded-md border border-gray-200 shadow-sm p-5 space-y-4">
-              <h2 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black">
-                Pricing
-              </h2>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Discount %" hint="Applied to all P50 unit prices">
+              <div className="flex items-center justify-between">
+                <h2 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black">
+                  Quote Items
+                </h2>
+                <button onClick={addItem} className="flex items-center gap-1.5 font-body text-sm text-brand-red hover:text-brand-red-dark">
+                  <Plus size={15} /> Add item
+                </button>
+              </div>
+              <p className="font-body text-xs text-gray-400 -mt-2">
+                Seeded from the recommended P50 units. Edit quantities and prices, or add supply,
+                installation and ancillary lines after the site survey.
+              </p>
+
+              {items.length === 0 ? (
+                <p className="font-body text-sm text-gray-400 italic py-2">No items yet — add the units and works for this quote.</p>
+              ) : (
+                <div className="space-y-3">
+                  {/* Column hints */}
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="flex-1 font-body text-[10px] font-semibold uppercase tracking-widest text-gray-400">Description</span>
+                    <span className="w-14 text-right font-body text-[10px] font-semibold uppercase tracking-widest text-gray-400">Qty</span>
+                    <span className="w-24 text-right font-body text-[10px] font-semibold uppercase tracking-widest text-gray-400">Unit £</span>
+                    <span className="w-20 text-right font-body text-[10px] font-semibold uppercase tracking-widest text-gray-400">Total</span>
+                    <span className="w-5" />
+                  </div>
+                  {items.map(li => (
+                    <div key={li.id} className="flex items-center gap-2">
+                      <input
+                        className="input-field flex-1 py-2 text-sm"
+                        placeholder="Item description"
+                        value={li.description}
+                        onChange={e => updateItem(li.id, { description: e.target.value })}
+                      />
+                      <input
+                        type="number" min="0" step="1"
+                        className="qty-input w-14"
+                        value={li.qty}
+                        onChange={e => updateItem(li.id, { qty: parseInt(e.target.value) || 0 })}
+                      />
+                      <input
+                        type="number" min="0" step="0.01"
+                        className="qty-input w-24"
+                        value={li.unit_price}
+                        onChange={e => updateItem(li.id, { unit_price: parseFloat(e.target.value) || 0 })}
+                      />
+                      <span className="w-20 text-right font-body text-sm tabular-nums text-gray-600">
+                        {formatGbp((li.qty || 0) * (li.unit_price || 0))}
+                      </span>
+                      <button onClick={() => removeItem(li.id)} className="w-5 text-gray-300 hover:text-brand-red" title="Remove item">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid grid-cols-3 gap-3 pt-2 border-t border-gray-100">
+                <Field label="Discount %" hint="Off the subtotal">
                   <input type="number" min="0" max="100" step="0.5" className="input-field text-right" value={proposal.discount_pct ?? 0} onChange={e => set('discount_pct', parseFloat(e.target.value) || 0)} />
                 </Field>
-                <Field label="Comparison years">
+                <Field label="VAT %">
+                  <input type="number" min="0" max="100" step="0.5" className="input-field text-right" value={proposal.vat_rate ?? 20} onChange={e => set('vat_rate', parseFloat(e.target.value) || 0)} />
+                </Field>
+                <Field label="Saving years" hint="For projection">
                   <input type="number" min="1" max="20" className="input-field text-right" value={proposal.comparison_years ?? 8} onChange={e => set('comparison_years', parseInt(e.target.value) || 8)} />
                 </Field>
               </div>
 
-              {p50WithQty.length > 0 && (
-                <div>
-                  <p className="font-body text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
-                    P50 unit price overrides
-                  </p>
-                  <div className="space-y-2">
-                    {p50WithQty.map(t => (
-                      <div key={t.id} className="flex items-center justify-between gap-3">
-                        <span className="font-body text-sm text-gray-600 flex-1 truncate">{t.label}</span>
-                        <span className="font-body text-xs text-gray-300">{formatGbp(t.clientCost)}</span>
-                        <input
-                          type="number" min="0" step="0.01"
-                          className="qty-input w-24"
-                          placeholder="override"
-                          value={proposal.price_overrides?.[t.id] ?? ''}
-                          onChange={e => setOverride(t.id, e.target.value)}
-                        />
-                      </div>
-                    ))}
-                  </div>
+              {/* Totals readout */}
+              <div className="bg-gray-50 rounded-md px-4 py-3 space-y-1">
+                <div className="flex justify-between font-body text-sm text-gray-500">
+                  <span>Subtotal</span><span className="tabular-nums">{formatGbp(quote.subtotal)}</span>
                 </div>
-              )}
+                {quote.discount > 0 && (
+                  <div className="flex justify-between font-body text-sm text-eco-green">
+                    <span>Discount</span><span className="tabular-nums">−{formatGbp(quote.discount)}</span>
+                  </div>
+                )}
+                {quote.vat > 0 && (
+                  <div className="flex justify-between font-body text-sm text-gray-500">
+                    <span>VAT</span><span className="tabular-nums">{formatGbp(quote.vat)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-heading font-bold text-brand-black border-t border-gray-200 pt-1 mt-1">
+                  <span>Total</span><span className="tabular-nums text-brand-red">{formatGbp(quote.total)}</span>
+                </div>
+              </div>
             </section>
 
             {/* Narrative */}
