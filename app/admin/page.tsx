@@ -317,47 +317,6 @@ function SessionsTab({ token }: { token: string }) {
           })}
         </div>
       )}
-
-      <EmbedSnippet />
-    </div>
-  )
-}
-
-// ─── Website embed snippet ────────────────────────────────────────────────────
-
-function EmbedSnippet() {
-  const [origin, setOrigin] = useState('')
-  const [copied, setCopied] = useState(false)
-
-  useEffect(() => setOrigin(window.location.origin), [])
-
-  const snippet = `<div id="eastern-calculator"></div>\n<script src="${origin}/embed.js" async></script>`
-
-  function copy() {
-    navigator.clipboard.writeText(snippet)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  return (
-    <div className="mt-8 bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden">
-      <div className="bg-gray-50 border-b border-gray-100 px-5 py-3 flex items-center justify-between">
-        <div>
-          <h2 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black">
-            Website Embed Code
-          </h2>
-          <p className="font-body text-xs text-gray-400 mt-0.5">
-            Give this to the web developer. Leads land in the Website session above.
-          </p>
-        </div>
-        <button onClick={copy} className="btn-secondary flex items-center gap-1.5 text-xs py-1.5 px-3">
-          <Copy size={12} />
-          {copied ? 'Copied!' : 'Copy Code'}
-        </button>
-      </div>
-      <pre className="px-5 py-4 font-mono text-xs text-gray-600 overflow-x-auto whitespace-pre">
-        {snippet}
-      </pre>
     </div>
   )
 }
