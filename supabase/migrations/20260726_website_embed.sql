@@ -22,8 +22,5 @@ alter table public.event_entries enable row level security;
 alter table public.sessions      enable row level security;
 alter table public.config        enable row level security;
 
-drop policy if exists "anon read entries"  on public.event_entries;
-drop policy if exists "anon write entries" on public.event_entries;
-drop policy if exists "anon read config"   on public.config;
-drop policy if exists "anon write config"  on public.config;
-drop policy if exists "anon read sessions" on public.sessions;
+-- Removing the old anon policies is handled by 20260726b_drop_anon_policies.sql,
+-- which drops them by lookup rather than by guessed name. Run that one too.

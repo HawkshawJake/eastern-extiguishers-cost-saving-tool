@@ -105,6 +105,15 @@ deploys keep working either way.
 
 ## Database set-up
 
-Run `supabase/migrations/20260726_website_embed.sql` once in the Supabase SQL
-editor. It seeds the Website session, adds the indexes the session queries
-need, and enables row-level security on all three tables.
+Run both files in `supabase/migrations/` once each, in order, in the Supabase
+SQL editor:
+
+1. `20260726_website_embed.sql` — seeds the Website session, adds the indexes
+   the session queries need, and enables row-level security.
+2. `20260726b_drop_anon_policies.sql` — removes the leftover policies that let
+   the anon key reach the tables directly. Its final `select` should return
+   zero rows; if it returns any, RLS is not fully closed.
+
+To confirm afterwards, a direct request to the Supabase REST API with the anon
+key should return an empty array for all three tables, and an insert with it
+should be rejected.
