@@ -11,8 +11,9 @@ function frameAncestors(): string {
 }
 
 export function middleware(req: NextRequest) {
-  const res = NextResponse.next()
   const path = req.nextUrl.pathname
+
+  const res = NextResponse.next()
   const isEmbed = path === '/embed' || path.startsWith('/embed/')
 
   res.headers.set('X-Content-Type-Options', 'nosniff')

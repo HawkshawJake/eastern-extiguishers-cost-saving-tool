@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/build-embed.mjs",
     "build": "next build",
+    "build:embed": "node scripts/build-embed.mjs",
     "start": "next start",
     "lint": "next lint"
   },
@@ -23,6 +25,7 @@
     "autoprefixer": "10.4.20",
     "postcss": "8.4.37",
     "tailwindcss": "3.4.4",
+    "terser": "^5.49.0",
     "typescript": "5.5.4"
   }
 }
