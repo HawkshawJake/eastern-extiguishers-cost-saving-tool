@@ -1,3 +1,5 @@
+import { storedKeys, removeStored } from './safeStorage'
+
 export interface EventEntry {
   id: string
   company: string
@@ -14,7 +16,8 @@ export interface EventEntry {
 }
 
 export async function addEntry(
-  entry: Pick<EventEntry, 'company' | 'industry' | 'saving' | 'steel_inventory' | 'p50_inventory'> & { email?: string; phone?: string; session_id?: string },
+  entry: Pick<EventEntry, 'company' | 'industry' | 'saving' | 'steel_inventory' | 'p50_inventory'>
+    & { email?: string; phone?: string; session_id?: string; source?: 'website' },
 ): Promise<string> {
   const res = await fetch('/api/add-entry', {
     method: 'POST',
@@ -68,11 +71,9 @@ export async function resetEntries(token: string, sessionId?: string): Promise<v
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token, ...(sessionId ? { session_id: sessionId } : {}) }),
   })
-  try {
-    for (const key of Object.keys(sessionStorage)) {
-      if (key.startsWith('ee_') && key !== 'ee_session_id' && key !== 'ee_session_name') {
-        sessionStorage.removeItem(key)
-      }
+  for (const key of storedKeys()) {
+    if (key.startsWith('ee_') && key !== 'ee_session_id' && key !== 'ee_session_name') {
+      removeStored(key)
     }
-  } catch { /* ignore */ }
+  }
 }

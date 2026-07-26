@@ -4,7 +4,7 @@ export const P50_UNIT_DISPOSAL = 6.00     // P50/steel disposal charge when swit
 export const CALLOUT_CHARGE_STEEL = 100   // annual engineer call-out on steel contract
 export const CALLOUT_CHARGE_P50 = 75      // call-out when P50 units are installed or replaced
 export const P50_INSTALLATION_CHARGE = 11 // per-unit installation charge for P50
-export const COMPARISON_YEARS = 8
+export const COMPARISON_YEARS = 10  // default comparison period shown on the results page
 export const STEEL_CO2_PER_UNIT = 4.39
 export const P50_CO2_PER_UNIT = 2.15
 

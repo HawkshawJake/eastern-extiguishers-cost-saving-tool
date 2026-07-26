@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Download, Lock, ChevronDown, ChevronUp, Settings, Users, RotateCcw, Save,
-  Mail, RefreshCw, Trash2, Plus, Copy, ArrowUpRight, Radio, Pencil, Check, X,
+  Mail, RefreshCw, Trash2, Plus, Copy, ArrowUpRight, Radio, Pencil, Check, X, Globe,
 } from 'lucide-react'
+import { WEBSITE_SESSION_SLUG } from '@/lib/websiteSession.client'
 import Header from '@/components/Header'
 import EntryDetail from '@/components/EntryDetail'
 import { getAllEntries, resetEntries, type EventEntry } from '@/lib/eventStore'
@@ -173,7 +174,9 @@ function SessionsTab({ token }: { token: string }) {
         </div>
       ) : (
         <div className="bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden">
-          {sessions.map((session, idx) => (
+          {sessions.map((session, idx) => {
+            const isWebsite = session.slug === WEBSITE_SESSION_SLUG
+            return (
             <div
               key={session.id}
               className={`px-5 py-4 flex items-center gap-4 ${idx < sessions.length - 1 ? 'border-b border-gray-100' : ''}`}
@@ -181,7 +184,7 @@ function SessionsTab({ token }: { token: string }) {
               {/* Live indicator */}
               <button
                 onClick={() => handleToggleLive(session)}
-                disabled={togglingId === session.id}
+                disabled={togglingId === session.id || isWebsite}
                 title={session.is_live ? 'Mark as inactive' : 'Mark as live'}
                 className={`shrink-0 w-2.5 h-2.5 rounded-full transition-colors ${
                   session.is_live ? 'bg-eco-green' : 'bg-gray-300'
@@ -214,18 +217,27 @@ function SessionsTab({ token }: { token: string }) {
                 ) : (
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-heading font-bold text-brand-black text-sm">{session.name}</span>
-                    <span className={`text-xs font-body px-1.5 py-0.5 rounded-full ${
-                      session.is_live ? 'bg-eco-light text-eco-green' : 'bg-gray-100 text-gray-400'
-                    }`}>
-                      {session.is_live ? 'Live' : 'Inactive'}
-                    </span>
-                    <button
-                      onClick={() => { setEditingId(session.id); setEditName(session.name) }}
-                      className="text-gray-300 hover:text-gray-500 transition-colors"
-                      title="Rename session"
-                    >
-                      <Pencil size={12} />
-                    </button>
+                    {isWebsite ? (
+                      <span className="text-xs font-body px-1.5 py-0.5 rounded-full bg-brand-red/10 text-brand-red flex items-center gap-1">
+                        <Globe size={10} />
+                        Embedded
+                      </span>
+                    ) : (
+                      <span className={`text-xs font-body px-1.5 py-0.5 rounded-full ${
+                        session.is_live ? 'bg-eco-light text-eco-green' : 'bg-gray-100 text-gray-400'
+                      }`}>
+                        {session.is_live ? 'Live' : 'Inactive'}
+                      </span>
+                    )}
+                    {!isWebsite && (
+                      <button
+                        onClick={() => { setEditingId(session.id); setEditName(session.name) }}
+                        className="text-gray-300 hover:text-gray-500 transition-colors"
+                        title="Rename session"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                    )}
                   </div>
                 )}
                 <p className="font-body text-xs text-gray-400 mt-0.5">
@@ -235,20 +247,24 @@ function SessionsTab({ token }: { token: string }) {
                   · {session.lead_count} {session.lead_count === 1 ? 'lead' : 'leads'}
                 </p>
                 <p className="font-body text-xs text-gray-300 mt-0.5 truncate">
-                  {typeof window !== 'undefined' ? window.location.origin : ''}/event/{session.slug}
+                  {isWebsite
+                    ? 'Everyone who uses the calculator on the Eastern Extinguishers website'
+                    : `${typeof window !== 'undefined' ? window.location.origin : ''}/event/${session.slug}`}
                 </p>
               </div>
 
               {/* Actions */}
               <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={() => copyUrl(session.slug, session.id)}
-                  className="btn-secondary flex items-center gap-1.5 text-xs py-1.5 px-3"
-                  title="Copy event URL"
-                >
-                  <Copy size={12} />
-                  {copiedId === session.id ? 'Copied!' : 'Copy URL'}
-                </button>
+                {!isWebsite && (
+                  <button
+                    onClick={() => copyUrl(session.slug, session.id)}
+                    className="btn-secondary flex items-center gap-1.5 text-xs py-1.5 px-3"
+                    title="Copy event URL"
+                  >
+                    <Copy size={12} />
+                    {copiedId === session.id ? 'Copied!' : 'Copy URL'}
+                  </button>
+                )}
 
                 <button
                   onClick={() => router.push(`/admin/session/${session.id}`)}
@@ -258,7 +274,7 @@ function SessionsTab({ token }: { token: string }) {
                   View Leads
                 </button>
 
-                {confirmDeleteId === session.id ? (
+                {isWebsite ? null : confirmDeleteId === session.id ? (
                   <div className="flex flex-col items-end gap-1">
                     <span className="font-body text-xs text-gray-500">Also delete the {session.lead_count} {session.lead_count === 1 ? 'lead' : 'leads'}?</span>
                     <div className="flex items-center gap-2">
@@ -297,9 +313,51 @@ function SessionsTab({ token }: { token: string }) {
                 )}
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
+
+      <EmbedSnippet />
+    </div>
+  )
+}
+
+// ─── Website embed snippet ────────────────────────────────────────────────────
+
+function EmbedSnippet() {
+  const [origin, setOrigin] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => setOrigin(window.location.origin), [])
+
+  const snippet = `<div id="eastern-calculator"></div>\n<script src="${origin}/embed.js" async></script>`
+
+  function copy() {
+    navigator.clipboard.writeText(snippet)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="mt-8 bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-gray-50 border-b border-gray-100 px-5 py-3 flex items-center justify-between">
+        <div>
+          <h2 className="font-heading font-bold text-base uppercase tracking-wide text-brand-black">
+            Website Embed Code
+          </h2>
+          <p className="font-body text-xs text-gray-400 mt-0.5">
+            Give this to the web developer. Leads land in the Website session above.
+          </p>
+        </div>
+        <button onClick={copy} className="btn-secondary flex items-center gap-1.5 text-xs py-1.5 px-3">
+          <Copy size={12} />
+          {copied ? 'Copied!' : 'Copy Code'}
+        </button>
+      </div>
+      <pre className="px-5 py-4 font-mono text-xs text-gray-600 overflow-x-auto whitespace-pre">
+        {snippet}
+      </pre>
     </div>
   )
 }

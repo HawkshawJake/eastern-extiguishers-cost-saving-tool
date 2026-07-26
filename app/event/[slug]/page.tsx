@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Flame } from 'lucide-react'
+import { setStored, removeStored } from '@/lib/safeStorage'
 
 export default function EventEntryPage() {
   const router = useRouter()
@@ -15,15 +16,15 @@ export default function EventEntryPage() {
         const res = await fetch(`/api/session/${slug}`)
         const json = await res.json()
         if (json.ok && json.session) {
-          sessionStorage.setItem('ee_session_id', json.session.id)
-          sessionStorage.setItem('ee_session_name', json.session.name)
+          setStored('ee_session_id', json.session.id)
+          setStored('ee_session_name', json.session.name)
         }
       } catch {
         // proceed without session context if lookup fails
       }
       // Clear any stale per-visitor state so the calculator starts fresh
-      sessionStorage.removeItem('ee_entry_id')
-      sessionStorage.removeItem('ee_lead_done')
+      removeStored('ee_entry_id')
+      removeStored('ee_lead_done')
       router.replace('/')
     }
     init()

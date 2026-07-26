@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { isSameOrigin } from '@/lib/requestGuard'
 
 export async function GET(req: NextRequest) {
+  if (!isSameOrigin(req)) return NextResponse.json({ ok: false }, { status: 403 })
   const sessionId = req.nextUrl.searchParams.get('session_id')
 
   let query = supabaseAdmin

@@ -3,14 +3,32 @@
 import { useState } from 'react'
 import { Flame, X } from 'lucide-react'
 
+/** The slice of the page currently on screen, in document coordinates. */
+export interface Viewport {
+  top: number
+  height: number
+}
+
 interface Props {
   initialCompany: string
   saving: string
   onSubmit: (data: { company: string; email: string; phone: string; marketingConsent: boolean }) => Promise<void>
   onDismiss: () => void
+  /**
+   * Set when the calculator runs inside an iframe. `position: fixed` there is
+   * relative to the frame's full height, not what the visitor can see, so the
+   * host page tells us which slice is on screen and we centre against that.
+   */
+  viewport?: Viewport | null
 }
 
-export default function LeadCaptureModal({ initialCompany, saving, onSubmit, onDismiss }: Props) {
+export default function LeadCaptureModal({
+  initialCompany,
+  saving,
+  onSubmit,
+  onDismiss,
+  viewport,
+}: Props) {
   const [company, setCompany] = useState(initialCompany)
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -35,8 +53,19 @@ export default function LeadCaptureModal({ initialCompany, saving, onSubmit, onD
     }
   }
 
+  const framed = !!viewport
+  const cardWrapperStyle = framed
+    ? { top: viewport!.top + viewport!.height / 2, transform: 'translateY(-50%)' }
+    : undefined
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div
+      className={
+        framed
+          ? 'absolute inset-0 z-50'
+          : 'fixed inset-0 z-50 flex items-center justify-center px-4'
+      }
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -44,6 +73,14 @@ export default function LeadCaptureModal({ initialCompany, saving, onSubmit, onD
       />
 
       {/* Card */}
+      <div
+        className={
+          framed
+            ? 'absolute left-0 right-0 px-4 flex justify-center'
+            : 'contents'
+        }
+        style={cardWrapperStyle}
+      >
       <div className="relative bg-white rounded-md shadow-xl w-full max-w-md overflow-hidden">
         {/* Close button */}
         <button
@@ -161,6 +198,7 @@ export default function LeadCaptureModal({ initialCompany, saving, onSubmit, onD
             </form>
           </>
         )}
+      </div>
       </div>
     </div>
   )

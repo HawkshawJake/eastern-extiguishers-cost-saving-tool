@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { getLeaderboard, type EventEntry } from '@/lib/eventStore'
 import { formatCurrency } from '@/lib/calculations'
+import { getStored } from '@/lib/safeStorage'
 import { Trophy } from 'lucide-react'
 
 const RANK_STYLES: Record<number, string> = {
@@ -29,8 +30,8 @@ export default function Leaderboard() {
   const [sessionName, setSessionName] = useState<string | null>(null)
 
   useEffect(() => {
-    const sessionId = sessionStorage.getItem('ee_session_id') ?? undefined
-    const name = sessionStorage.getItem('ee_session_name')
+    const sessionId = getStored('ee_session_id') ?? undefined
+    const name = getStored('ee_session_name')
     if (name) setSessionName(name)
 
     getLeaderboard(10, sessionId).then(data => {

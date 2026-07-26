@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { WEBSITE_SESSION_SLUG } from '@/lib/websiteSession'
 
 function checkAuth(token: string | null): boolean {
   return !!process.env.EXPORT_SECRET && token === process.env.EXPORT_SECRET
@@ -51,6 +52,20 @@ export async function DELETE(
   }
   const deleteLeads = req.nextUrl.searchParams.get('delete_leads') === 'true'
   const { id } = await params
+
+  // The Website session is where every embedded-calculator lead lands; removing
+  // it would silently break website tracking.
+  const { data: target } = await supabaseAdmin
+    .from('sessions')
+    .select('slug')
+    .eq('id', id)
+    .maybeSingle()
+  if (target?.slug === WEBSITE_SESSION_SLUG) {
+    return NextResponse.json(
+      { ok: false, error: 'The Website session cannot be deleted' },
+      { status: 400 },
+    )
+  }
 
   if (deleteLeads) {
     const { error: leadsError } = await supabaseAdmin

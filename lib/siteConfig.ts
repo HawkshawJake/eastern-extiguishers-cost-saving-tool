@@ -1,4 +1,3 @@
-import { supabase } from './supabase'
 import { STEEL_TYPES, P50_TYPES, type SteelType, type P50Type } from '@/data/extinguishers'
 import { DEFAULT_CONSTANTS, type CalcConstants } from './calculations'
 
@@ -22,17 +21,23 @@ function mergeTypes<T extends { id: string }>(defaults: T[], stored: T[] | undef
   return defaults.map(t => storedMap.has(t.id) ? { ...t, ...storedMap.get(t.id)! } : t)
 }
 
+/** Layers the admin's saved overrides on top of the hardcoded defaults. */
+export function mergeStoredConfig(stored: unknown): SiteConfig {
+  const defaults = defaultSiteConfig()
+  if (!stored || typeof stored !== 'object') return defaults
+  const partial = stored as Partial<SiteConfig>
+  return {
+    constants: { ...defaults.constants, ...(partial.constants ?? {}) },
+    steelTypes: mergeTypes(defaults.steelTypes, partial.steelTypes),
+    p50Types: mergeTypes(defaults.p50Types, partial.p50Types),
+  }
+}
+
 export async function loadConfig(): Promise<SiteConfig> {
   try {
-    const { data } = await supabase.from('config').select('data').single()
-    if (!data?.data) return defaultSiteConfig()
-    const stored = data.data as Partial<SiteConfig>
-    const defaults = defaultSiteConfig()
-    return {
-      constants: { ...defaults.constants, ...(stored.constants ?? {}) },
-      steelTypes: mergeTypes(defaults.steelTypes, stored.steelTypes),
-      p50Types: mergeTypes(defaults.p50Types, stored.p50Types),
-    }
+    const res = await fetch('/api/config', { cache: 'no-store' })
+    const json = await res.json()
+    return json.config ? mergeStoredConfig(json.config) : defaultSiteConfig()
   } catch {
     return defaultSiteConfig()
   }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { getTotalSaving } from '@/lib/eventStore'
 import { formatCurrency } from '@/lib/calculations'
+import { getStored } from '@/lib/safeStorage'
 
 function useCountUp(target: number) {
   const [current, setCurrent] = useState(0)
@@ -33,8 +34,8 @@ export default function DayCounter() {
   const [sessionName, setSessionName] = useState<string | null>(null)
 
   useEffect(() => {
-    const sessionId = sessionStorage.getItem('ee_session_id') ?? undefined
-    const name = sessionStorage.getItem('ee_session_name')
+    const sessionId = getStored('ee_session_id') ?? undefined
+    const name = getStored('ee_session_name')
     if (name) setSessionName(name)
 
     async function load() {
